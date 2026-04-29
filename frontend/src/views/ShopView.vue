@@ -30,7 +30,7 @@
                 />
               </div>
             </div>
-            
+
             <!-- Category -->
             <div class="col-6 col-md-3 col-lg-2">
               <label class="form-label small fw-medium text-uppercase tracking-wider" style="color: #6c757d;">Category</label>
@@ -40,7 +40,7 @@
                 <option value="fiction">Fiction</option>
               </select>
             </div>
-            
+
             <!-- Sort -->
             <div class="col-6 col-md-3 col-lg-2">
               <label class="form-label small fw-medium text-uppercase tracking-wider" style="color: #6c757d;">Sort By</label>
@@ -51,7 +51,7 @@
                 <option value="price_desc">Price: High to Low</option>
               </select>
             </div>
-            
+
             <!-- Price Range -->
             <div class="col-12 col-md-6 col-lg-3">
               <label class="form-label small fw-medium text-uppercase tracking-wider" style="color: #6c757d;">Price Range ($)</label>
@@ -61,7 +61,7 @@
                 <input v-model.number="maxPrice" type="number" class="form-control p-2 px-3 rounded-3 text-center" placeholder="Max" min="0" />
               </div>
             </div>
-            
+
             <!-- Limit -->
             <div class="col-6 col-md-3 col-lg-2">
               <label class="form-label small fw-medium text-uppercase tracking-wider" style="color: #6c757d;">Per page</label>
@@ -123,7 +123,7 @@
       <div v-else class="row g-4">
         <div v-for="b in books" :key="b.id" class="col-6 col-md-4 col-lg-3">
           <div class="card shop-card h-100 border-0 rounded-4 shadow-sm bg-white position-relative">
-            
+
             <!-- Badges -->
             <div class="position-absolute top-0 start-0 w-100 p-2 d-flex justify-content-between align-items-start" style="z-index: 3; pointer-events: none;">
               <div class="d-flex flex-column gap-1">
@@ -132,7 +132,7 @@
                   -{{ Math.round((1 - b.price / b.compareAtPrice) * 100) }}%
                 </span>
               </div>
-              <button class="btn btn-sm btn-light rounded-circle shadow-sm wishlist-btn" style="pointer-events: auto;" @click.prevent="toggleWishlist(b)">
+              <button class="btn btn-sm btn-light shadow-sm wishlist-btn" style="pointer-events: auto;" @click.prevent="toggleWishlist(b)">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-danger"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
               </button>
             </div>
@@ -146,7 +146,7 @@
                 style="width: 100% !important; aspect-ratio: 3/4 !important; object-fit: cover !important; object-position: center !important; height: auto !important; max-height: none !important; max-width: 100% !important; display: block;"
                 loading="lazy"
               />
-              
+
               <!-- Hover Overlay Actions -->
               <div class="hover-overlay d-flex flex-column justify-content-center align-items-center gap-2">
                 <button class="btn btn-dark rounded-pill shadow-sm px-4 fw-medium" @click.prevent="addToCart(b)">
@@ -157,14 +157,14 @@
                 </RouterLink>
               </div>
             </div>
-            
+
             <!-- Card Body -->
             <div class="card-body p-3 p-md-4 d-flex flex-column">
               <RouterLink :to="{ name: 'product-detail', params: { slug: b.slug } }" class="text-decoration-none text-dark card-title-link">
                 <h6 class="card-title fw-bold mb-1 text-truncate" :title="b.title">{{ b.title }}</h6>
               </RouterLink>
               <p class="card-text small mb-2 text-truncate" style="color: #888;" :title="b.author">{{ b.author }}</p>
-              
+
               <div v-if="b.reviewCount > 0" class="d-flex align-items-center mb-2">
                 <div class="rating text-warning d-flex align-items-center me-1" style="font-size: 0.8rem;">
                   <svg class="star star-fill" v-for="i in 5" :key="i" :class="{'opacity-25': i > Math.round(b.ratingAvg || 0)}" width="12" height="12">
@@ -178,7 +178,7 @@
               </div>
 
               <div class="mt-auto d-flex align-items-end gap-2 pt-2 border-top border-light">
-                <span class="price text-dark fw-bold fs-5 mb-0 leading-none">${{ b.price }}</span>
+                <span class="price text-primary fw-bold fs-5 mb-0 leading-none">${{ b.price }}</span>
                 <s v-if="b.compareAtPrice > b.price" class="small mb-1" style="color: #adb5bd;">${{ b.compareAtPrice }}</s>
               </div>
             </div>

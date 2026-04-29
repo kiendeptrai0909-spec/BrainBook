@@ -10,7 +10,6 @@
     $('#header-nav').on('click', '.btn-close-search', function (e) {
       $('.search-popup').toggleClass('is-visible')
     })
-
     ;($('.search-popup-trigger').on('click', function (b) {
       b.preventDefault()
       ;($('.search-popup').addClass('is-visible'),
@@ -116,45 +115,6 @@
       $('#video').attr('src', $videoSrc)
     })
 
-    var mainSwiper = new Swiper('.main-swiper', {
-      speed: 500,
-      navigation: {
-        nextEl: '.main-slider-button-next',
-        prevEl: '.main-slider-button-prev',
-      },
-    })
-
-    var productSwiper = new Swiper('.product-swiper', {
-      spaceBetween: 20,
-      navigation: {
-        nextEl: '.product-slider-button-next',
-        prevEl: '.product-slider-button-prev',
-      },
-      breakpoints: {
-        0: {
-          slidesPerView: 1,
-        },
-        660: {
-          slidesPerView: 3,
-        },
-        980: {
-          slidesPerView: 4,
-        },
-        1500: {
-          slidesPerView: 5,
-        },
-      },
-    })
-
-    var testimonialSwiper = new Swiper('.testimonial-swiper', {
-      slidesPerView: 1,
-      spaceBetween: 20,
-      navigation: {
-        nextEl: '.testimonial-button-next',
-        prevEl: '.testimonial-button-prev',
-      },
-    })
-
     var thumb_slider = new Swiper('.thumb-swiper', {
       slidesPerView: 1,
     })
@@ -168,55 +128,54 @@
   }) // End of a document ready
 
   // TẠO MỘT HÀM TOÀN CỤC CHỨA CÁC HIỆU ỨNG CỦA TRANG CHỦ
-    window.initHomeScripts = function() {
-      
-      // --- ĐOẠN MỚI THÊM: TÌM VÀ TIÊU DIỆT CÁC SWIPER CŨ ---
-      const swiperElements = document.querySelectorAll('.swiper');
-      swiperElements.forEach(function(el) {
-        if (el.swiper !== undefined) {
-          el.swiper.destroy(true, true); // Xóa sạch hoàn toàn khỏi bộ nhớ
-        }
-      });
-      // ---------------------------------------------------
+  window.initHomeScripts = function () {
+    // --- ĐOẠN MỚI THÊM: TÌM VÀ TIÊU DIỆT CÁC SWIPER CŨ ---
+    const swiperElements = document.querySelectorAll('.swiper')
+    swiperElements.forEach(function (el) {
+      if (el.swiper !== undefined) {
+        el.swiper.destroy(true, true) // Xóa sạch hoàn toàn khỏi bộ nhớ
+      }
+    })
+    // ---------------------------------------------------
 
-      initProductQty();
-      countdownTimer();
+    initProductQty()
+    countdownTimer()
 
-      var mainSwiper = new Swiper(".main-swiper", {
-        speed: 500,
-        observer: true,       
-        observeParents: true, 
-        navigation: {
-          nextEl: ".main-slider-button-next",
-          prevEl: ".main-slider-button-prev",
-        },
-      });
+    var mainSwiper = new Swiper('.main-swiper', {
+      speed: 500,
+      observer: true,
+      observeParents: true,
+      navigation: {
+        nextEl: '.main-slider-button-next',
+        prevEl: '.main-slider-button-prev',
+      },
+    })
 
-      var productSwiper = new Swiper(".product-swiper", {
-        spaceBetween: 20,        
-        observer: true,       
-        observeParents: true, 
-        navigation: {
-          nextEl: ".product-slider-button-next",
-          prevEl: ".product-slider-button-prev",
-        },
-        breakpoints: {
-          0: { slidesPerView: 1, },
-          660: { slidesPerView: 3, },
-          980: { slidesPerView: 4, },
-          1500: { slidesPerView: 5, }
-        },
-      });      
+    var productSwiper = new Swiper('.product-swiper', {
+      spaceBetween: 20,
+      observer: true,
+      observeParents: true,
+      navigation: {
+        nextEl: '.product-slider-button-next',
+        prevEl: '.product-slider-button-prev',
+      },
+      breakpoints: {
+        0: { slidesPerView: 1 },
+        660: { slidesPerView: 3 },
+        980: { slidesPerView: 4 },
+        1500: { slidesPerView: 5 },
+      },
+    })
 
-      var testimonialSwiper = new Swiper(".testimonial-swiper", {
-        slidesPerView: 1,
-        spaceBetween: 20,
-        observer: true,       
-        observeParents: true, 
-        navigation: {
-          nextEl: ".testimonial-button-next",
-          prevEl: ".testimonial-button-prev",
-        },
-      });
-    };
+    var testimonialSwiper = new Swiper('.testimonial-swiper', {
+      slidesPerView: 1,
+      spaceBetween: 20,
+      observer: true,
+      observeParents: true,
+      navigation: {
+        nextEl: '.testimonial-button-next',
+        prevEl: '.testimonial-button-prev',
+      },
+    })
+  }
 })(jQuery)

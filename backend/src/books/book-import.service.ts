@@ -41,9 +41,17 @@ export class BookImportService {
     const publisher = data.publishers?.[0]?.name || ''
 
     // 🔥 3. Ảnh
-    const imageUrl = `https://covers.openlibrary.org/b/isbn/${normalizedIsbn}-L.jpg`
+    const coverUrl = `https://covers.openlibrary.org/b/isbn/${normalizedIsbn}-L.jpg`
 
-    const upload: any = await this.cloudinary.uploadFromUrl(imageUrl)
+    let finalImageUrl = coverUrl
+    let finalImagePublicId: string | undefined = undefined
+
+    // If Cloudinary isn't configured (common in local/dev), fall back to using the public cover URL.
+    if (this.cloudinary.isConfigured()) {
+      const upload: any = await this.cloudinary.uploadFromUrl(coverUrl)
+      finalImageUrl = upload.secure_url
+      finalImagePublicId = upload.public_id
+    }
 
     // 🔥 4. PRICE (USD)
     const price = this.generateUsdPrice()
@@ -78,8 +86,8 @@ export class BookImportService {
         title,
         slug,
         price,
-        imageUrl: upload.secure_url,
-        imagePublicId: upload.public_id,
+        imageUrl: finalImageUrl,
+        imagePublicId: finalImagePublicId,
         description,
         language,
         authorId: authorRecord.id,

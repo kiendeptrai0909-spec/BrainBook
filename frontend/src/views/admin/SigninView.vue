@@ -70,12 +70,13 @@
 <script setup>
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 import { login } from '@/services/authService'
-import { setAccessToken } from '@/services/api'
 
 const router = useRouter()
 const route = useRoute()
+const auth = useAuthStore()
 
 const email = ref('')
 const password = ref('')
@@ -96,7 +97,7 @@ async function handleSubmit() {
       response?.data?.accessToken ||
       response?.data?.token
     if (token) {
-      setAccessToken(token)
+      auth.setToken(token)
     }
 
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : ''

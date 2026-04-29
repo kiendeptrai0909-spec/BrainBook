@@ -25,7 +25,9 @@
               <form @submit.prevent="handleSubmit">
                 <div class="row">
                   <div class="col-md-6 mb-3">
-                    <label for="categoryName" class="form-label">Tên danh mục <span class="text-danger">*</span></label>
+                    <label for="categoryName" class="form-label"
+                      >Tên danh mục <span class="text-danger">*</span></label
+                    >
                     <input
                       id="categoryName"
                       v-model="form.name"
@@ -48,14 +50,6 @@
                 </div>
 
                 <div class="mb-3">
-                  <label for="categoryImage" class="form-label">Hình ảnh danh mục</label>
-                  <input id="categoryImage" type="file" class="form-control" accept="image/*" @change="handleFileChange" />
-                  <div v-if="imagePreview" class="mt-2">
-                    <img :src="imagePreview" alt="Preview" class="img-thumbnail" style="max-height: 200px;" />
-                  </div>
-                </div>
-
-                <div class="mb-3">
                   <label for="categoryDescription" class="form-label">Mô tả</label>
                   <textarea
                     id="categoryDescription"
@@ -68,10 +62,22 @@
 
                 <div class="d-flex gap-2">
                   <button type="submit" class="btn btn-primary" :disabled="loading">
-                    <span v-if="loading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                    <span
+                      v-if="loading"
+                      class="spinner-border spinner-border-sm me-1"
+                      role="status"
+                      aria-hidden="true"
+                    ></span>
                     {{ loading ? 'Đang lưu...' : 'Thêm danh mục' }}
                   </button>
-                  <button type="button" class="btn btn-secondary" @click="resetForm" :disabled="loading">Xóa form</button>
+                  <button
+                    type="button"
+                    class="btn btn-secondary"
+                    @click="resetForm"
+                    :disabled="loading"
+                  >
+                    Xóa form
+                  </button>
                 </div>
               </form>
             </div>
@@ -86,13 +92,10 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { createCategory } from '@/services/categoryService'
-import { uploadImage } from '@/services/booksService'
 import { toast } from 'vue3-toastify'
 
 const router = useRouter()
 const loading = ref(false)
-const selectedFile = ref(null)
-const imagePreview = ref(null)
 
 const initialForm = {
   name: '',
@@ -102,23 +105,8 @@ const initialForm = {
 
 const form = reactive({ ...initialForm })
 
-const handleFileChange = (e) => {
-  const file = e.target.files[0]
-  if (file) {
-    selectedFile.value = file
-    imagePreview.value = URL.createObjectURL(file)
-  } else {
-    selectedFile.value = null
-    imagePreview.value = null
-  }
-}
-
 const resetForm = () => {
   Object.assign(form, initialForm)
-  selectedFile.value = null
-  imagePreview.value = null
-  const fileInput = document.getElementById('categoryImage')
-  if (fileInput) fileInput.value = ''
 }
 
 const handleSubmit = async () => {
@@ -129,18 +117,10 @@ const handleSubmit = async () => {
 
   loading.value = true
   try {
-    let imageUrl = ''
-    if (selectedFile.value) {
-      toast.info('Đang tải ảnh lên...', { autoClose: 1500 })
-      const uploadRes = await uploadImage(selectedFile.value)
-      imageUrl = uploadRes.url
-    }
-
     const payload = {
       name: form.name,
       slug: form.slug || undefined,
       description: form.description || undefined,
-      image: imageUrl || undefined
     }
 
     await createCategory(payload)

@@ -39,7 +39,6 @@
             <table class="table mb-0 text-nowrap table-hover">
               <thead class="table-light border-light">
                 <tr>
-                  <th>Hình ảnh</th>
                   <th>Tên</th>
                   <th>Slug</th>
                   <th>Sản phẩm</th>
@@ -49,15 +48,15 @@
               </thead>
               <tbody>
                 <tr v-if="loading">
-                  <td colspan="6" class="py-4 text-center text-muted">Đang tải dữ liệu...</td>
+                  <td colspan="5" class="py-4 text-center text-muted">Đang tải dữ liệu...</td>
                 </tr>
 
                 <tr v-else-if="error">
-                  <td colspan="6" class="py-4 text-center text-danger">{{ error }}</td>
+                  <td colspan="5" class="py-4 text-center text-danger">{{ error }}</td>
                 </tr>
 
                 <tr v-else-if="categories.length === 0">
-                  <td colspan="6" class="py-4 text-center text-muted">Chưa có danh mục nào.</td>
+                  <td colspan="5" class="py-4 text-center text-muted">Chưa có danh mục nào.</td>
                 </tr>
 
                 <tr
@@ -65,13 +64,6 @@
                   :key="category.id || category._id"
                   class="align-middle"
                 >
-                  <td>
-                    <img
-                      :src="category.image || '/admin-assets/assets/images/product-1.png'"
-                      :alt="category.name || 'Category image'"
-                      class="avatar avatar-md rounded"
-                    />
-                  </td>
                   <td>{{ category.name }}</td>
                   <td>{{ category.slug }}</td>
                   <td>{{ category.productCount ?? category.productsCount ?? 0 }}</td>
@@ -96,7 +88,7 @@
               <tfoot>
                 <tr>
                   <td class="border-bottom-0">Hiển thị danh mục mỗi trang</td>
-                  <td colspan="6" class="border-bottom-0">
+                  <td colspan="4" class="border-bottom-0">
                     <nav aria-label="Điều hướng trang" class="d-flex justify-content-end">
                       <ul class="pagination mb-0">
                         <li class="page-item disabled">

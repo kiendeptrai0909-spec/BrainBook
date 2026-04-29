@@ -13,7 +13,7 @@ export const useCartStore = defineStore('cart', () => {
   })
 
   const totalPrice = computed(() => {
-    return items.value.reduce((sum, item) => sum + (item.quantity * item.price), 0)
+    return items.value.reduce((sum, item) => sum + item.quantity * item.price, 0)
   })
 
   async function fetchCart() {
@@ -23,7 +23,7 @@ export const useCartStore = defineStore('cart', () => {
     }
     try {
       const data = await apiGet('/cart', {
-        headers: { 'Authorization': `Bearer ${auth.token}` }
+        headers: { Authorization: `Bearer ${auth.token}` },
       })
       items.value = data?.items || []
     } catch (err) {
@@ -42,8 +42,8 @@ export const useCartStore = defineStore('cart', () => {
 
     try {
       await apiPost('/cart/items', {
-        headers: { 'Authorization': `Bearer ${auth.token}` },
-        body: { bookId, quantity }
+        headers: { Authorization: `Bearer ${auth.token}` },
+        body: { bookId, quantity },
       })
 
       toast.success('Đã thêm sản phẩm vào giỏ hàng!')

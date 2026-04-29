@@ -10,7 +10,9 @@
               <h1 class="fs-3 mb-1 fw-bold text-primary">Thêm sản phẩm</h1>
             </div>
             <div>
-              <RouterLink :to="{ name: 'admin-products' }" class="btn btn-outline-primary">Về danh sách sản phẩm</RouterLink>
+              <RouterLink :to="{ name: 'admin-products' }" class="btn btn-outline-primary"
+                >Về danh sách sản phẩm</RouterLink
+              >
             </div>
           </div>
         </div>
@@ -22,7 +24,9 @@
               <form @submit.prevent="handleSubmit">
                 <div class="row">
                   <div class="col-md-6 mb-3">
-                    <label for="productName" class="form-label">Tên sản phẩm <span class="text-danger">*</span></label>
+                    <label for="productName" class="form-label"
+                      >Tên sản phẩm <span class="text-danger">*</span></label
+                    >
                     <input
                       v-model="form.title"
                       type="text"
@@ -33,7 +37,9 @@
                     />
                   </div>
                   <div class="col-md-6 mb-3">
-                    <label for="productSKU" class="form-label">SKU <span class="text-danger">*</span></label>
+                    <label for="productSKU" class="form-label"
+                      >SKU <span class="text-danger">*</span></label
+                    >
                     <input
                       v-model="form.sku"
                       type="text"
@@ -46,7 +52,9 @@
                 </div>
                 <div class="row">
                   <div class="col-md-6 mb-3">
-                    <label for="productPrice" class="form-label">Giá <span class="text-danger">*</span></label>
+                    <label for="productPrice" class="form-label"
+                      >Giá <span class="text-danger">*</span></label
+                    >
                     <input
                       v-model.number="form.price"
                       type="number"
@@ -58,7 +66,9 @@
                     />
                   </div>
                   <div class="col-md-6 mb-3">
-                    <label for="productStock" class="form-label">Số lượng tồn kho <span class="text-danger">*</span></label>
+                    <label for="productStock" class="form-label"
+                      >Số lượng tồn kho <span class="text-danger">*</span></label
+                    >
                     <input
                       v-model.number="form.stock"
                       type="number"
@@ -81,7 +91,7 @@
                   />
                   <small class="text-muted">Ví dụ: 1 cho Romance, 2 cho Fiction...</small>
                 </div>
-                
+
                 <div class="mb-3">
                   <label for="productImage" class="form-label">Hình ảnh sản phẩm</label>
                   <input
@@ -92,10 +102,15 @@
                     @change="handleFileChange"
                   />
                   <div v-if="imagePreview" class="mt-2">
-                    <img :src="imagePreview" alt="Preview" class="img-thumbnail" style="max-height: 200px;" />
+                    <img
+                      :src="imagePreview"
+                      alt="Preview"
+                      class="img-thumbnail"
+                      style="max-height: 200px"
+                    />
                   </div>
                 </div>
-                
+
                 <div class="mb-3">
                   <label for="productDescription" class="form-label">Mô tả</label>
                   <textarea
@@ -108,10 +123,22 @@
                 </div>
                 <div class="d-flex gap-2">
                   <button type="submit" class="btn btn-primary" :disabled="loading">
-                    <span v-if="loading" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                    <span
+                      v-if="loading"
+                      class="spinner-border spinner-border-sm me-1"
+                      role="status"
+                      aria-hidden="true"
+                    ></span>
                     {{ loading ? 'Đang lưu...' : 'Thêm sản phẩm' }}
                   </button>
-                  <button type="button" class="btn btn-secondary" @click="resetForm" :disabled="loading">Xóa form</button>
+                  <button
+                    type="button"
+                    class="btn btn-secondary"
+                    @click="resetForm"
+                    :disabled="loading"
+                  >
+                    Xóa form
+                  </button>
                 </div>
               </form>
             </div>
@@ -172,12 +199,19 @@ const handleSubmit = async () => {
   loading.value = true
   try {
     let imageUrl = ''
-    
+
     // 1. Upload image if selected
     if (selectedFile.value) {
       toast.info('Đang tải ảnh lên...', { autoClose: 1500 })
-      const uploadRes = await uploadImage(selectedFile.value)
-      imageUrl = uploadRes.url
+      try {
+        const uploadRes = await uploadImage(selectedFile.value)
+        imageUrl = uploadRes?.url || ''
+      } catch (uploadError) {
+        console.error('Error uploading image:', uploadError)
+        const message = uploadError instanceof Error ? uploadError.message : 'Upload ảnh thất bại'
+        toast.warning(`${message}. Tiếp tục tạo sản phẩm không có ảnh.`)
+        imageUrl = ''
+      }
     }
 
     // 2. Create product
@@ -187,7 +221,7 @@ const handleSubmit = async () => {
       price: Number(form.price),
       stock: Number(form.stock),
       description: form.description,
-      imageUrl: imageUrl
+      imageUrl: imageUrl,
     }
 
     if (form.categoryId) {

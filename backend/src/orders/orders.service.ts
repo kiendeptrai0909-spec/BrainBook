@@ -4,11 +4,12 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { PaymentStatus, Prisma } from '@prisma/client';
+import { OrderStatus, PaymentMethod, PaymentStatus, Prisma } from '@prisma/client';
 import { customAlphabet } from 'nanoid';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtUser } from '../common/current-user.decorator';
 import { CreateOrderDto } from './dto/create-order.dto';
+import { QueryOrdersDto } from './dto/query-orders.dto';
 
 const orderSuffix = customAlphabet('0123456789ABCDEFGHJKLMNPQRSTUVWXYZ', 8);
 
@@ -263,22 +264,96 @@ export class OrdersService {
     };
   }
 
-  async findAll() {
+  async findAll(query: QueryOrdersDto = {}) {
+    const where: Prisma.OrderWhereInput = {
+      deletedAt: null,
+    };
+
+    if (query.q?.trim()) {
+      const q = query.q.trim();
+      where.OR = [
+        { orderNumber: { contains: q, mode: 'insensitive' } },
+        { customerEmail: { contains: q, mode: 'insensitive' } },
+        { customerPhone: { contains: q, mode: 'insensitive' } },
+      ];
+    }
+
+    if (query.status) {
+      where.status = query.status as OrderStatus;
+    }
+
+    if (query.paymentMethod) {
+      where.paymentMethod = query.paymentMethod as PaymentMethod;
+    }
+
+    if (query.paymentStatus) {
+      where.payments = { some: { status: query.paymentStatus as PaymentStatus } };
+    }
+
+    const page = query.page ?? 1;
+    const limit = Math.min(query.limit ?? 50, 200);
+    const skip = (page - 1) * limit;
+
     const orders = await this.prisma.order.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
+      skip,
+      take: limit,
       include: {
         payments: { orderBy: { createdAt: 'desc' }, take: 1 },
       },
     });
 
-    return orders.map(order => ({
+    return orders.map((order) => ({
       id: order.id,
       orderNumber: order.orderNumber,
       total: order.total.toNumber(),
       status: order.status,
       paymentStatus: order.payments?.[0]?.status || 'UNKNOWN',
+      paymentMethod: order.paymentMethod,
       createdAt: order.createdAt,
     }));
+  }
+
+  async updateOrderStatus(orderNumber: string, status: OrderStatus) {
+    const order = await this.prisma.order.update({
+      where: { orderNumber },
+      data: { status },
+      select: { id: true, orderNumber: true, status: true, updatedAt: true },
+    });
+    return order;
+  }
+
+  async updatePaymentStatus(orderNumber: string, status: PaymentStatus) {
+    const order = await this.prisma.order.findUnique({
+      where: { orderNumber },
+      select: { id: true },
+    });
+    if (!order) throw new NotFoundException('Order not found');
+
+    const payment = await this.prisma.payment.findFirst({
+      where: { orderId: order.id },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!payment) throw new NotFoundException('Payment not found');
+
+    const now = new Date();
+    const data: Prisma.PaymentUpdateInput = { status };
+
+    if (status === PaymentStatus.CAPTURED) {
+      data.paidAt = now;
+    }
+    if (status === PaymentStatus.REFUNDED || status === PaymentStatus.PARTIALLY_REFUNDED) {
+      data.refundedAt = now;
+    }
+
+    const updated = await this.prisma.payment.update({
+      where: { id: payment.id },
+      data,
+      select: { id: true, status: true, paidAt: true, refundedAt: true, updatedAt: true },
+    });
+
+    return updated;
   }
 
   /** Retry on rare orderNumber collision. */

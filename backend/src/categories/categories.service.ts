@@ -25,7 +25,6 @@ export class CategoriesService {
       slug: category.slug,
       productCount: 0,
       isActive: true,
-      image: null
     };
   }
 
@@ -44,7 +43,6 @@ export class CategoriesService {
       slug: c.slug,
       productCount: c._count.books,
       isActive: true, // Mock property if not present in schema
-      image: null // Mock property if not present in schema
     }));
   }
 }

@@ -103,11 +103,12 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 import { register } from '@/services/authService'
-import { setAccessToken } from '@/services/api'
 
 const router = useRouter()
+const auth = useAuthStore()
 
 const fullName = ref('')
 const email = ref('')
@@ -166,7 +167,7 @@ async function handleSubmit() {
 
     const token = response?.access_token || response?.accessToken || response?.token
     if (token) {
-      setAccessToken(token)
+      auth.setToken(token)
       await router.push({ name: 'admin' })
       return
     }

@@ -10,9 +10,5 @@ export class CreateCategoryDto {
 
   @IsString()
   @IsOptional()
-  image?: string;
-
-  @IsString()
-  @IsOptional()
   description?: string;
 }

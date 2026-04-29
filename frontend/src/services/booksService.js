@@ -41,9 +41,24 @@ export async function uploadImage(file) {
     body: formData,
   })
 
+  const contentType = res.headers.get('content-type') || ''
+  const isJson = contentType.includes('application/json')
+
+  const data = await (async () => {
+    try {
+      return isJson ? await res.json() : await res.text()
+    } catch {
+      return null
+    }
+  })()
+
   if (!res.ok) {
-    throw new Error('Failed to upload image')
+    const message =
+      (data && typeof data === 'object' && (data.message || data.error)) ||
+      (typeof data === 'string' && data) ||
+      'Upload ảnh thất bại'
+    throw new Error(Array.isArray(message) ? message.join('\n') : message)
   }
 
-  return res.json()
+  return data
 }

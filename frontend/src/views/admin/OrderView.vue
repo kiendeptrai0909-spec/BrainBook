@@ -25,22 +25,58 @@
         <div class="col-12">
           <ul class="nav nav-tabs mb-3">
             <li class="nav-item">
-              <a class="nav-link active" href="#">Tất cả</a>
+              <a
+                class="nav-link"
+                :class="{ active: activeTab === 'all' }"
+                href="#"
+                @click.prevent="setTab('all')"
+                >Tất cả</a
+              >
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#">Chờ thanh toán</a>
+              <a
+                class="nav-link"
+                :class="{ active: activeTab === 'pending_payment' }"
+                href="#"
+                @click.prevent="setTab('pending_payment')"
+                >Chờ thanh toán</a
+              >
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#">Chưa hoàn tất</a>
+              <a
+                class="nav-link"
+                :class="{ active: activeTab === 'incomplete' }"
+                href="#"
+                @click.prevent="setTab('incomplete')"
+                >Chưa hoàn tất</a
+              >
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#">Hoàn tất</a>
+              <a
+                class="nav-link"
+                :class="{ active: activeTab === 'completed' }"
+                href="#"
+                @click.prevent="setTab('completed')"
+                >Hoàn tất</a
+              >
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#">Hoàn tiền</a>
+              <a
+                class="nav-link"
+                :class="{ active: activeTab === 'refunded' }"
+                href="#"
+                @click.prevent="setTab('refunded')"
+                >Hoàn tiền</a
+              >
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#">Thất bại</a>
+              <a
+                class="nav-link"
+                :class="{ active: activeTab === 'failed' }"
+                href="#"
+                @click.prevent="setTab('failed')"
+                >Thất bại</a
+              >
             </li>
           </ul>
 
@@ -50,7 +86,12 @@
                 <span class="input-group-text bg-white">
                   <i class="ti ti-search"></i>
                 </span>
-                <input type="text" class="form-control" placeholder="Tìm kiếm đơn hàng..." />
+                <input
+                  v-model="searchText"
+                  type="text"
+                  class="form-control"
+                  placeholder="Tìm kiếm đơn hàng..."
+                />
               </div>
             </div>
 
@@ -63,12 +104,32 @@
                     data-bs-toggle="dropdown"
                     aria-expanded="false"
                   >
-                    Phương thức thanh toán
+                    {{ selectedPaymentMethodLabel }}
                   </button>
                   <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="#">Thanh toán khi nhận hàng (COD)</a></li>
-                    <li><a class="dropdown-item" href="#">Chuyển khoản ngân hàng</a></li>
-                    <li><a class="dropdown-item" href="#">PayPal / Thẻ tín dụng</a></li>
+                    <li>
+                      <a class="dropdown-item" href="#" @click.prevent="setPaymentMethod('')"
+                        >Tất cả</a
+                      >
+                    </li>
+                    <li>
+                      <a class="dropdown-item" href="#" @click.prevent="setPaymentMethod('COD')"
+                        >Thanh toán khi nhận hàng (COD)</a
+                      >
+                    </li>
+                    <li>
+                      <a
+                        class="dropdown-item"
+                        href="#"
+                        @click.prevent="setPaymentMethod('BANK_TRANSFER')"
+                        >Chuyển khoản ngân hàng</a
+                      >
+                    </li>
+                    <li>
+                      <a class="dropdown-item" href="#" @click.prevent="setPaymentMethod('PAYPAL')"
+                        >PayPal / Thẻ tín dụng</a
+                      >
+                    </li>
                   </ul>
                 </div>
 
@@ -117,7 +178,12 @@
                 <tr v-if="orders.length === 0">
                   <td colspan="7" class="text-center py-4 text-muted">Chưa có đơn hàng nào.</td>
                 </tr>
-                <tr v-for="order in orders" :key="order.id" class="align-middle">
+                <tr
+                  v-for="order in orders"
+                  :key="order.id"
+                  class="align-middle"
+                  :class="{ 'opacity-50 bg-light': order.status === 'CANCELLED' }"
+                >
                   <td>
                     <div class="form-check mb-0">
                       <input
@@ -128,33 +194,53 @@
                     </div>
                   </td>
                   <td>
-                    <RouterLink :to="`/admin/orders/${order.orderNumber}`" class="link-primary text-decoration-none">
+                    <RouterLink
+                      :to="`/admin/orders/${order.orderNumber}`"
+                      class="link-primary text-decoration-none fw-bold"
+                    >
                       {{ order.orderNumber }}
                     </RouterLink>
                   </td>
-                  <td>${{ order.total }}</td>
+                  <td class="fw-semibold">${{ order.total }}</td>
                   <td>
-                    <span 
-                      class="badge" 
+                    <span
+                      class="badge"
                       :class="{
-                        'text-bg-success': order.paymentStatus === 'COMPLETED',
+                        'text-bg-success': order.paymentStatus === 'CAPTURED',
                         'text-bg-warning': order.paymentStatus === 'PENDING',
-                        'text-bg-danger': order.paymentStatus === 'FAILED' || order.paymentStatus === 'REFUNDED',
-                        'text-bg-secondary': !['COMPLETED', 'PENDING', 'FAILED', 'REFUNDED'].includes(order.paymentStatus)
+                        'text-bg-danger':
+                          order.paymentStatus === 'FAILED' ||
+                          order.paymentStatus === 'REFUNDED' ||
+                          order.paymentStatus === 'PARTIALLY_REFUNDED',
+                        'text-bg-secondary': ![
+                          'CAPTURED',
+                          'AUTHORIZED',
+                          'PENDING',
+                          'FAILED',
+                          'REFUNDED',
+                          'PARTIALLY_REFUNDED',
+                        ].includes(order.paymentStatus),
                       }"
                     >
                       {{ getPaymentStatusText(order.paymentStatus) }}
                     </span>
                   </td>
                   <td>
-                    <span 
-                      class="badge" 
+                    <span
+                      class="badge"
                       :class="{
-                        'text-bg-success': order.status === 'COMPLETED' || order.status === 'DELIVERED',
+                        'text-bg-success': order.status === 'DELIVERED',
                         'text-bg-info': order.status === 'PROCESSING' || order.status === 'SHIPPED',
                         'text-bg-warning': order.status === 'PENDING',
-                        'text-bg-danger': order.status === 'CANCELLED' || order.status === 'FAILED',
-                        'text-bg-secondary': !['COMPLETED', 'DELIVERED', 'PROCESSING', 'SHIPPED', 'PENDING', 'CANCELLED', 'FAILED'].includes(order.status)
+                        'text-bg-danger': order.status === 'CANCELLED',
+                        'text-bg-secondary': ![
+                          'DELIVERED',
+                          'PROCESSING',
+                          'SHIPPED',
+                          'PENDING',
+                          'PAID',
+                          'CANCELLED',
+                        ].includes(order.status),
                       }"
                     >
                       {{ getOrderStatusText(order.status) }}
@@ -162,8 +248,22 @@
                   </td>
                   <td>{{ formatDate(order.createdAt) }}</td>
                   <td>
-                    <a href="#" class=""><i class="ti ti-edit"></i></a>
-                    <a href="#" class="link-danger"><i class="ti ti-trash ms-2"></i></a>
+                    <RouterLink
+                      :to="`/admin/orders/${order.orderNumber}`"
+                      class="text-secondary"
+                      title="Sửa đơn hàng"
+                    >
+                      <i class="ti ti-edit fs-5"></i>
+                    </RouterLink>
+                    <a
+                      href="#"
+                      class="link-danger ms-3"
+                      title="Hủy đơn hàng"
+                      @click.prevent="cancelOrder(order)"
+                      :class="{ 'pe-none text-muted': order.status === 'CANCELLED' }"
+                    >
+                      <i class="ti ti-trash fs-5"></i>
+                    </a>
                   </td>
                 </tr>
               </tbody>
@@ -177,11 +277,7 @@
                           <a class="page-link" href="#" tabindex="-1">Trước</a>
                         </li>
                         <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                        <li class="page-item"><a class="page-link" href="#">2</a></li>
-                        <li class="page-item"><a class="page-link" href="#">3</a></li>
-                        <li class="page-item">
-                          <a class="page-link" href="#">Sau</a>
-                        </li>
+                        <li class="page-item disabled"><a class="page-link" href="#">Sau</a></li>
                       </ul>
                     </nav>
                   </td>
@@ -198,24 +294,100 @@
 <script setup>
 defineOptions({ name: 'OrderView' })
 
-import { ref, onMounted } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
-import { getOrders } from '@/services/ordersService'
+import { getOrders, updateOrderStatus } from '@/services/ordersService'
 import { toast } from 'vue3-toastify'
 
 const orders = ref([])
+const allOrders = ref([])
 const loading = ref(false)
+
+const activeTab = ref('all')
+const searchText = ref('')
+const selectedPaymentMethod = ref('')
+
+const selectedPaymentMethodLabel = computed(() => {
+  const map = {
+    '': 'Phương thức thanh toán',
+    COD: 'Thanh toán khi nhận hàng (COD)',
+    BANK_TRANSFER: 'Chuyển khoản ngân hàng',
+    PAYPAL: 'PayPal / Thẻ tín dụng',
+  }
+  return map[selectedPaymentMethod.value] || 'Phương thức thanh toán'
+})
+
+function setTab(tab) {
+  activeTab.value = tab
+}
+
+function setPaymentMethod(method) {
+  selectedPaymentMethod.value = method
+}
+
+const filteredOrders = computed(() => {
+  const tab = activeTab.value
+  const base = allOrders.value
+
+  if (tab === 'pending_payment') {
+    return base.filter((o) => o.paymentStatus === 'PENDING')
+  }
+  if (tab === 'completed') {
+    return base.filter((o) => o.status === 'DELIVERED')
+  }
+  if (tab === 'refunded') {
+    return base.filter(
+      (o) => o.paymentStatus === 'REFUNDED' || o.paymentStatus === 'PARTIALLY_REFUNDED',
+    )
+  }
+  if (tab === 'failed') {
+    return base.filter((o) => o.paymentStatus === 'FAILED' || o.status === 'CANCELLED')
+  }
+  if (tab === 'incomplete') {
+    return base.filter((o) => !['DELIVERED', 'CANCELLED'].includes(o.status))
+  }
+  return base
+})
 
 const loadOrders = async () => {
   loading.value = true
   try {
-    const data = await getOrders()
-    orders.value = data || []
+    const data = await getOrders({
+      q: searchText.value || undefined,
+      paymentMethod: selectedPaymentMethod.value || undefined,
+    })
+
+    const rows = data?.data || data || []
+    allOrders.value = Array.isArray(rows) ? rows : []
+    orders.value = filteredOrders.value
   } catch (error) {
     console.error('Failed to load orders', error)
     toast.error('Lỗi khi tải danh sách đơn hàng')
   } finally {
     loading.value = false
+  }
+}
+
+// HÀM MỚI: XỬ LÝ HỦY ĐƠN HÀNG (DELETE LOGIC)
+const cancelOrder = async (order) => {
+  if (order.status === 'CANCELLED') return
+
+  if (
+    confirm(
+      `Bạn có chắc chắn muốn HỦY đơn hàng ${order.orderNumber} không? Hành động này không thể xóa khỏi CSDL mà sẽ chuyển trạng thái thành Đã Hủy.`,
+    )
+  ) {
+    try {
+      // Sử dụng service updateOrderStatus đã import
+      await updateOrderStatus(order.orderNumber, 'CANCELLED')
+      toast.success(`Đã hủy đơn hàng ${order.orderNumber}`)
+
+      // Update local state để UI phản hồi ngay lập tức
+      order.status = 'CANCELLED'
+    } catch (error) {
+      console.error(error)
+      toast.error('Hủy đơn hàng thất bại!')
+    }
   }
 }
 
@@ -233,29 +405,43 @@ const formatDate = (dateString) => {
 
 const getPaymentStatusText = (status) => {
   const map = {
-    'COMPLETED': 'Hoàn tất',
-    'PENDING': 'Chờ xử lý',
-    'FAILED': 'Thất bại',
-    'REFUNDED': 'Hoàn tiền',
-    'UNKNOWN': 'Không rõ'
+    CAPTURED: 'Hoàn tất',
+    AUTHORIZED: 'Đã xác thực',
+    PENDING: 'Chờ xử lý',
+    FAILED: 'Thất bại',
+    REFUNDED: 'Hoàn tiền',
+    PARTIALLY_REFUNDED: 'Hoàn tiền một phần',
+    UNKNOWN: 'Không rõ',
   }
   return map[status] || status
 }
 
 const getOrderStatusText = (status) => {
   const map = {
-    'PENDING': 'Chờ xác nhận',
-    'PROCESSING': 'Đang xử lý',
-    'SHIPPED': 'Đang giao',
-    'DELIVERED': 'Đã giao',
-    'COMPLETED': 'Hoàn tất',
-    'CANCELLED': 'Đã hủy',
-    'FAILED': 'Thất bại'
+    PENDING: 'Chờ xác nhận',
+    PAID: 'Đã thanh toán',
+    PROCESSING: 'Đang xử lý',
+    SHIPPED: 'Đang giao',
+    DELIVERED: 'Đã giao',
+    CANCELLED: 'Đã hủy',
+    FAILED: 'Thất bại',
   }
   return map[status] || status
 }
 
+let searchTimer
+watch([searchText, selectedPaymentMethod, activeTab], () => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    loadOrders()
+  }, 250)
+})
+
 onMounted(() => {
   loadOrders()
+})
+
+watch(filteredOrders, (next) => {
+  orders.value = next
 })
 </script>

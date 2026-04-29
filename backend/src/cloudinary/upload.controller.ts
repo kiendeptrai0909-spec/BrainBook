@@ -28,6 +28,7 @@ export class UploadController {
     return {
       url: result.secure_url,
       publicId: result.public_id,
+      provider: result.provider || 'cloudinary',
     }
   }
 }

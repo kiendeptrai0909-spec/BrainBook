@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { QueryBooksDto } from './dto/query-books.dto';
@@ -18,6 +18,58 @@ type BookRow = Prisma.BookGetPayload<{ include: typeof bookInclude }>;
 @Injectable()
 export class BooksService {
   constructor(private readonly prisma: PrismaService) {}
+
+  private static readonly DEFAULT_AUTHOR_NAME = 'Unknown';
+
+  private async ensureDefaultAuthorId() {
+    const existing = await this.prisma.author.findFirst({
+      orderBy: { id: 'asc' },
+      select: { id: true },
+    });
+    if (existing) return existing.id;
+
+    const author = await this.prisma.author.upsert({
+      where: { name: BooksService.DEFAULT_AUTHOR_NAME },
+      update: {},
+      create: { name: BooksService.DEFAULT_AUTHOR_NAME },
+      select: { id: true },
+    });
+    return author.id;
+  }
+
+  private async assertCategoriesExist(ids: number[]) {
+    if (!ids?.length) return;
+
+    const rows = await this.prisma.category.findMany({
+      where: { id: { in: ids } },
+      select: { id: true },
+    });
+    const existingIds = new Set(rows.map((r) => r.id));
+    const missing = ids.filter((id) => !existingIds.has(id));
+    if (missing.length) {
+      throw new BadRequestException(`Danh mục không tồn tại: ${missing.join(', ')}`);
+    }
+  }
+
+  private mapPrismaError(error: unknown): Error {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        const targets = Array.isArray((error.meta as any)?.target)
+          ? ((error.meta as any).target as string[])
+          : [];
+        if (targets.includes('sku')) {
+          return new BadRequestException('SKU đã tồn tại') as any;
+        }
+        return new BadRequestException('Dữ liệu bị trùng (unique constraint)') as any;
+      }
+
+      if (error.code === 'P2025') {
+        return new BadRequestException('Dữ liệu liên kết không tồn tại (author/category)') as any;
+      }
+    }
+
+    return error instanceof Error ? error : new Error('Internal server error');
+  }
 
   async findPage(dto: QueryBooksDto) {
     const page = dto.page ?? 1;
@@ -106,7 +158,9 @@ export class BooksService {
 
   async create(dto: CreateBookDto) {
     const slug = dto.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    const authorId = dto.authorId || 1; // Default to first author if not provided
+    const authorId = dto.authorId ?? (await this.ensureDefaultAuthorId());
+
+    await this.assertCategoriesExist(dto.categoryIds ?? []);
 
     const data: Prisma.BookCreateInput = {
       title: dto.title,
@@ -128,10 +182,15 @@ export class BooksService {
       };
     }
 
-    const book = await this.prisma.book.create({
-      data,
-      include: bookInclude,
-    });
+    let book: BookRow;
+    try {
+      book = await this.prisma.book.create({
+        data,
+        include: bookInclude,
+      });
+    } catch (error) {
+      throw this.mapPrismaError(error);
+    }
     
     return this.serialize(book);
   }
