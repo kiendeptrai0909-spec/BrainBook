@@ -1,8 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { toast } from 'vue3-toastify'
-
-const API_URL = 'http://localhost:3000'
+import { apiPost, apiGet } from '@/lib/api'
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref(localStorage.getItem('token') || null)
@@ -12,17 +11,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function login(email, password) {
     try {
-      const res = await fetch(`${API_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      })
-      const data = await res.json()
+      const data = await apiPost('/auth/login', { body: { email, password } })
       
-      if (!res.ok) {
-        throw new Error(data.message || 'Login failed')
-      }
-
       token.value = data.accessToken
       localStorage.setItem('token', data.accessToken)
       
@@ -37,17 +27,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function register(email, password) {
     try {
-      const res = await fetch(`${API_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      })
-      const data = await res.json()
-      
-      if (!res.ok) {
-        throw new Error(data.message || 'Registration failed')
-      }
-
+      await apiPost('/auth/register', { body: { email, password } })
       toast.success('Registration successful! Please login.')
       return true
     } catch (err) {
@@ -59,16 +39,11 @@ export const useAuthStore = defineStore('auth', () => {
   async function fetchProfile() {
     if (!token.value) return
     try {
-      const res = await fetch(`${API_URL}/auth/profile`, {
-        headers: { 'Authorization': `Bearer ${token.value}` }
-      })
-      if (res.ok) {
-        user.value = await res.json()
-      } else {
-        logout() // Invalid token
-      }
+      const data = await apiGet('/auth/profile', { headers: { 'Authorization': `Bearer ${token.value}` } })
+      user.value = data
     } catch (err) {
       console.error(err)
+      logout() // Invalid token
     }
   }
 

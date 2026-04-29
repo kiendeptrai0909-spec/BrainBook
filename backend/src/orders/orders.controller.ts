@@ -19,4 +19,9 @@ export class OrdersController {
     if (!orderNumber?.trim()) throw new BadRequestException('orderNumber is required');
     return this.orders.findByOrderNumber(orderNumber.trim(), email);
   }
+
+  @Get()
+  findAll() {
+    return this.orders.findAll();
+  }
 }

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { QueryBooksDto } from './dto/query-books.dto';
+import { CreateBookDto } from './dto/create-book.dto';
 
 const bookInclude = {
   author: true,
@@ -101,5 +102,37 @@ export class BooksService {
       categories: book.categories.map((c) => ({ id: c.category.id, name: c.category.name, slug: c.category.slug })),
       tags: book.tags.map((t) => ({ id: t.tag.id, name: t.tag.name, slug: t.tag.slug })),
     };
+  }
+
+  async create(dto: CreateBookDto) {
+    const slug = dto.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const authorId = dto.authorId || 1; // Default to first author if not provided
+
+    const data: Prisma.BookCreateInput = {
+      title: dto.title,
+      sku: dto.sku,
+      slug: slug,
+      price: dto.price,
+      description: dto.description || '',
+      format: 'Paperback',
+      imageUrl: dto.imageUrl || '',
+      author: { connect: { id: authorId } },
+      inventory: { create: { stock: dto.stock } },
+    };
+
+    if (dto.categoryIds && dto.categoryIds.length > 0) {
+      data.categories = {
+        create: dto.categoryIds.map(id => ({
+          category: { connect: { id } }
+        }))
+      };
+    }
+
+    const book = await this.prisma.book.create({
+      data,
+      include: bookInclude,
+    });
+    
+    return this.serialize(book);
   }
 }

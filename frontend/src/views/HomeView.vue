@@ -1199,22 +1199,33 @@
 </template>
 
 <script setup>
-// Nhập thêm nextTick từ vue
-import { onMounted, nextTick } from 'vue'
+import { onMounted, nextTick, ref } from 'vue'
+import { apiGet } from '@/lib/api'
 
-// Thêm chữ async vào trước ()
+const books = ref([])
+const loading = ref(false)
+
+const loadBooks = async () => {
+  loading.value = true
+  try {
+    books.value = await apiGet('/books')
+  } catch (error) {
+    console.error('Failed to load books for home view', error)
+  } finally {
+    loading.value = false
+  }
+}
+
 onMounted(async () => {
-  // 1. Lệnh này bắt buộc Vue phải đợi vẽ xong 100% HTML mới đi tiếp
+  await loadBooks()
   await nextTick()
 
-  // 2. Chạy lại hiệu ứng Swiper
   setTimeout(() => {
     if (typeof window.initHomeScripts === 'function') {
       window.initHomeScripts()
     }
   }, 100)
 
-  // 3. Tắt màn hình chờ
   setTimeout(() => {
     const preloader = document.getElementById('preloader')
     if (preloader) {

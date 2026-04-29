@@ -263,6 +263,24 @@ export class OrdersService {
     };
   }
 
+  async findAll() {
+    const orders = await this.prisma.order.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        payments: { orderBy: { createdAt: 'desc' }, take: 1 },
+      },
+    });
+
+    return orders.map(order => ({
+      id: order.id,
+      orderNumber: order.orderNumber,
+      total: order.total.toNumber(),
+      status: order.status,
+      paymentStatus: order.payments?.[0]?.status || 'UNKNOWN',
+      createdAt: order.createdAt,
+    }));
+  }
+
   /** Retry on rare orderNumber collision. */
   private async allocateOrderNumber(max = 8): Promise<string> {
     for (let i = 0; i < max; i++) {

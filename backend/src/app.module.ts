@@ -10,6 +10,7 @@ import { JwtSharedModule } from './jwt/jwt-shared.module';
 import { OrdersModule } from './orders/orders.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module'
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module'
     ContactModule,
     AddressesModule,
     CloudinaryModule,
+    CategoriesModule,
   ],
   controllers: [HealthController],
 })

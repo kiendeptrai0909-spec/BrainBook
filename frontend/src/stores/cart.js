@@ -2,8 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useAuthStore } from './auth'
 import { toast } from 'vue3-toastify'
-
-const API_URL = 'http://localhost:3000'
+import { apiGet, apiPost } from '@/lib/api'
 
 export const useCartStore = defineStore('cart', () => {
   const items = ref([])
@@ -23,13 +22,10 @@ export const useCartStore = defineStore('cart', () => {
       return
     }
     try {
-      const res = await fetch(`${API_URL}/cart`, {
+      const data = await apiGet('/cart', {
         headers: { 'Authorization': `Bearer ${auth.token}` }
       })
-      if (res.ok) {
-        const data = await res.json()
-        items.value = data.items || []
-      }
+      items.value = data?.items || []
     } catch (err) {
       console.error('Failed to fetch cart', err)
     }
@@ -45,18 +41,10 @@ export const useCartStore = defineStore('cart', () => {
     }
 
     try {
-      const res = await fetch(`${API_URL}/cart/items`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${auth.token}`
-        },
-        body: JSON.stringify({ bookId, quantity })
+      await apiPost('/cart/items', {
+        headers: { 'Authorization': `Bearer ${auth.token}` },
+        body: { bookId, quantity }
       })
-
-      if (!res.ok) {
-        throw new Error('Failed to add to cart')
-      }
 
       toast.success('Đã thêm sản phẩm vào giỏ hàng!')
       await fetchCart() // Refresh cart from server
