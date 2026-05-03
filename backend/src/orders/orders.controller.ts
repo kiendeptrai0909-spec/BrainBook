@@ -24,6 +24,12 @@ export class OrdersController {
     return this.orders.findByOrderNumber(orderNumber.trim(), email);
   }
 
+  @Get('my')
+  @UseGuards(JwtAuthGuard)
+  myOrders(@CurrentUser() user: JwtUser) {
+    return this.orders.findUserOrders(user.sub);
+  }
+
   @Get()
   @UseGuards(JwtAuthGuard)
   findAll(@Query() query: QueryOrdersDto) {

@@ -45,4 +45,27 @@ export class CategoriesService {
       isActive: true, // Mock property if not present in schema
     }));
   }
+
+  async findOne(id: number) {
+    return this.prisma.category.findUnique({
+      where: { id },
+    });
+  }
+
+  async update(id: number, dto: CreateCategoryDto) {
+    const slug = dto.slug || dto.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    return this.prisma.category.update({
+      where: { id },
+      data: {
+        name: dto.name,
+        slug,
+      }
+    });
+  }
+
+  async remove(id: number) {
+    return this.prisma.category.delete({
+      where: { id }
+    });
+  }
 }

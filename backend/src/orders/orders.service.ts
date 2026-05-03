@@ -303,6 +303,25 @@ export class OrdersService {
         payments: { orderBy: { createdAt: 'desc' }, take: 1 },
       },
     });
+    return orders.map((order) => ({
+      id: order.id,
+      orderNumber: order.orderNumber,
+      total: order.total.toNumber(),
+      status: order.status,
+      paymentStatus: order.payments?.[0]?.status || 'UNKNOWN',
+      paymentMethod: order.paymentMethod,
+      createdAt: order.createdAt,
+    }));
+  }
+
+  async findUserOrders(userId: string) {
+    const orders = await this.prisma.order.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        payments: { orderBy: { createdAt: 'desc' }, take: 1 },
+      },
+    });
 
     return orders.map((order) => ({
       id: order.id,

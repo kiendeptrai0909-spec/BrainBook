@@ -22,17 +22,6 @@
             <div class="col-12 col-md-4 col-lg-3">
               <input type="text" class="form-control" placeholder="Tìm kiếm danh mục..." />
             </div>
-            <div class="col-12 col-md">
-              <div class="d-flex gap-2 justify-content-md-end flex-wrap">
-                <button class="btn btn-outline-secondary"><i class="ti ti-filter"></i> Lọc</button>
-                <button class="btn btn-outline-secondary">
-                  <i class="ti ti-file-excel"></i> Excel
-                </button>
-                <button class="btn btn-outline-secondary">
-                  <i class="ti ti-file-pdf"></i> PDF
-                </button>
-              </div>
-            </div>
           </div>
 
           <div class="card table-responsive">
@@ -61,12 +50,12 @@
 
                 <tr
                   v-for="category in categories"
-                  :key="category.id || category._id"
+                  :key="category.id"
                   class="align-middle"
                 >
                   <td>{{ category.name }}</td>
                   <td>{{ category.slug }}</td>
-                  <td>{{ category.productCount ?? category.productsCount ?? 0 }}</td>
+                  <td>{{ category.productCount || 0 }}</td>
                   <td>
                     <span
                       class="badge"
@@ -76,35 +65,15 @@
                     </span>
                   </td>
                   <td>
-                    <a href="#" class="" @click.prevent="handleEdit(category)">
+                    <RouterLink :to="{ name: 'admin-edit-category', params: { id: category.id } }" class="btn btn-sm btn-outline-primary me-2">
                       <i class="ti ti-edit"></i>
-                    </a>
-                    <a href="#" class="link-danger" @click.prevent="handleDelete(category)">
-                      <i class="ti ti-trash ms-2"></i>
-                    </a>
+                    </RouterLink>
+                    <button class="btn btn-sm btn-outline-danger" @click="handleDelete(category.id)">
+                      <i class="ti ti-trash"></i>
+                    </button>
                   </td>
                 </tr>
               </tbody>
-              <tfoot>
-                <tr>
-                  <td class="border-bottom-0">Hiển thị danh mục mỗi trang</td>
-                  <td colspan="4" class="border-bottom-0">
-                    <nav aria-label="Điều hướng trang" class="d-flex justify-content-end">
-                      <ul class="pagination mb-0">
-                        <li class="page-item disabled">
-                          <a class="page-link" href="#" tabindex="-1">Trước</a>
-                        </li>
-                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                        <li class="page-item"><a class="page-link" href="#">2</a></li>
-                        <li class="page-item"><a class="page-link" href="#">3</a></li>
-                        <li class="page-item">
-                          <a class="page-link" href="#">Sau</a>
-                        </li>
-                      </ul>
-                    </nav>
-                  </td>
-                </tr>
-              </tfoot>
             </table>
           </div>
         </div>
@@ -114,11 +83,10 @@
 </template>
 
 <script setup>
-defineOptions({ name: 'CategoryView' })
-
 import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { getCategories } from '@/services/categoryService'
+import { getCategories, deleteCategory } from '@/services/categoryService'
+import { toast } from 'vue3-toastify'
 
 const categories = ref([])
 const loading = ref(false)
@@ -138,12 +106,15 @@ async function loadCategories() {
   }
 }
 
-function handleEdit(category) {
-  console.log('Edit category:', category)
-}
-
-function handleDelete(category) {
-  console.log('Delete category:', category)
+async function handleDelete(id) {
+  if (!confirm('Bạn có chắc chắn muốn xóa danh mục này?')) return
+  try {
+    await deleteCategory(id)
+    toast.success('Xóa danh mục thành công!')
+    loadCategories()
+  } catch (exception) {
+    toast.error('Lỗi khi xóa danh mục')
+  }
 }
 
 onMounted(loadCategories)

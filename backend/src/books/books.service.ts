@@ -194,4 +194,59 @@ export class BooksService {
     
     return this.serialize(book);
   }
+
+  async update(id: number, dto: any) {
+    const data: Prisma.BookUpdateInput = {
+      title: dto.title,
+      sku: dto.sku,
+      price: dto.price,
+      description: dto.description,
+      imageUrl: dto.imageUrl,
+    };
+
+    if (dto.stock !== undefined) {
+      data.inventory = {
+        update: { stock: dto.stock }
+      };
+    }
+
+    if (dto.categoryIds) {
+      await this.assertCategoriesExist(dto.categoryIds);
+      data.categories = {
+        deleteMany: {},
+        create: dto.categoryIds.map((id: number) => ({
+          category: { connect: { id } }
+        }))
+      };
+    }
+
+    try {
+      const book = await this.prisma.book.update({
+        where: { id },
+        data,
+        include: bookInclude,
+      });
+      return this.serialize(book);
+    } catch (error) {
+      throw this.mapPrismaError(error);
+    }
+  }
+
+  async remove(id: number) {
+    try {
+      await this.prisma.book.delete({ where: { id } });
+      return { success: true };
+    } catch (error) {
+      throw this.mapPrismaError(error);
+    }
+  }
+
+  async findById(id: number) {
+    const book = await this.prisma.book.findUnique({
+      where: { id },
+      include: bookInclude,
+    });
+    if (!book) throw new NotFoundException('Book not found');
+    return this.serialize(book);
+  }
 }

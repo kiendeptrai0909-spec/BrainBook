@@ -73,6 +73,28 @@ const router = createRouter({
       name: 'cart',
       component: CartView,
     },
+    {
+      path: '/login',
+      name: 'login',
+      component: () => import('@/views/LoginView.vue'),
+    },
+    {
+      path: '/register',
+      name: 'register',
+      component: () => import('@/views/RegisterView.vue'),
+    },
+    {
+      path: '/account',
+      name: 'account',
+      component: () => import('@/views/AccountView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/wishlist',
+      name: 'wishlist',
+      component: () => import('@/views/WishlistView.vue'),
+      meta: { requiresAuth: true },
+    },
 
     // ==========================================
     // KHU VỰC 2: ADMIN ROUTES (lazy-load)
@@ -80,6 +102,7 @@ const router = createRouter({
     {
       path: '/admin',
       component: () => import('@/layouts/AdminLayout.vue'),
+      meta: { isAdmin: true },
       children: [
         {
           path: '',
@@ -100,6 +123,12 @@ const router = createRouter({
           meta: { requiresAuth: true },
         },
         {
+          path: 'edit-product/:id',
+          name: 'admin-edit-product',
+          component: () => import('@/views/admin/CreateProductView.vue'),
+          meta: { requiresAuth: true },
+        },
+        {
           path: 'categories',
           name: 'admin-categories',
           component: () => import('@/views/admin/CategoryView.vue'),
@@ -108,6 +137,12 @@ const router = createRouter({
         {
           path: 'create-category',
           name: 'admin-create-category',
+          component: () => import('@/views/admin/CreateCategoryView.vue'),
+          meta: { requiresAuth: true },
+        },
+        {
+          path: 'edit-category/:id',
+          name: 'admin-edit-category',
           component: () => import('@/views/admin/CreateCategoryView.vue'),
           meta: { requiresAuth: true },
         },
@@ -127,6 +162,36 @@ const router = createRouter({
           path: 'reports',
           name: 'admin-reports',
           component: () => import('@/views/admin/ReportsView.vue'),
+          meta: { requiresAuth: true },
+        },
+        {
+          path: 'blog',
+          name: 'admin-blog',
+          component: () => import('@/views/admin/BlogManagementView.vue'),
+          meta: { requiresAuth: true },
+        },
+        {
+          path: 'blog/create',
+          name: 'admin-create-post',
+          component: () => import('@/views/admin/CreatePostView.vue'),
+          meta: { requiresAuth: true },
+        },
+        {
+          path: 'blog/edit/:id',
+          name: 'admin-edit-post',
+          component: () => import('@/views/admin/CreatePostView.vue'),
+          meta: { requiresAuth: true },
+        },
+        {
+          path: 'users',
+          name: 'admin-users',
+          component: () => import('@/views/admin/UserManagementView.vue'),
+          meta: { requiresAuth: true },
+        },
+        {
+          path: 'inventory',
+          name: 'admin-inventory',
+          component: () => import('@/views/admin/InventoryView.vue'),
           meta: { requiresAuth: true },
         },
         {

@@ -47,6 +47,21 @@
           <i class="ti ti-receipt"></i><span class="nav-text">Báo cáo</span>
         </RouterLink>
       </li>
+      <li>
+        <RouterLink class="nav-link" to="/admin/blog" active-class="active">
+          <i class="ti ti-news"></i><span class="nav-text">Quản lý Blog</span>
+        </RouterLink>
+      </li>
+      <li>
+        <RouterLink class="nav-link" to="/admin/users" active-class="active">
+          <i class="ti ti-users"></i><span class="nav-text">Người dùng</span>
+        </RouterLink>
+      </li>
+      <li>
+        <RouterLink class="nav-link" to="/admin/inventory" active-class="active">
+          <i class="ti ti-package"></i><span class="nav-text">Kho hàng</span>
+        </RouterLink>
+      </li>
       <li class="px-4 pt-4 pb-2"><small class="nav-text text-secondary">Tài khoản</small></li>
       <li v-if="isAuthed">
         <a class="nav-link" href="#" @click.prevent="handleLogout">

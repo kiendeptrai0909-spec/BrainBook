@@ -7,7 +7,7 @@
             class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3"
           >
             <div class="">
-              <h1 class="fs-3 mb-1 fw-bold text-primary">Thêm sản phẩm</h1>
+              <h1 class="fs-3 mb-1 fw-bold text-primary">{{ isEdit ? 'Chỉnh sửa' : 'Thêm' }} sản phẩm</h1>
             </div>
             <div>
               <RouterLink :to="{ name: 'admin-products' }" class="btn btn-outline-primary"
@@ -20,7 +20,10 @@
       <div class="row">
         <div class="col-12">
           <div class="card">
-            <div class="card-body p-4">
+            <div v-if="fetching" class="card-body p-5 text-center">
+              <div class="spinner-border text-primary" role="status"></div>
+            </div>
+            <div v-else class="card-body p-4">
               <form @submit.prevent="handleSubmit">
                 <div class="row">
                   <div class="col-md-6 mb-3">
@@ -93,7 +96,7 @@
                 </div>
 
                 <div class="mb-3">
-                  <label for="productImage" class="form-label">Hình ảnh sản phẩm</label>
+                  <label for="productImage" class="form-label">Hình ảnh sản phẩm {{ isEdit ? '(Để trống nếu không đổi)' : '' }}</label>
                   <input
                     type="file"
                     class="form-control"
@@ -101,9 +104,9 @@
                     accept="image/*"
                     @change="handleFileChange"
                   />
-                  <div v-if="imagePreview" class="mt-2">
+                  <div v-if="imagePreview || form.imageUrl" class="mt-2">
                     <img
-                      :src="imagePreview"
+                      :src="imagePreview || form.imageUrl"
                       alt="Preview"
                       class="img-thumbnail"
                       style="max-height: 200px"
@@ -129,16 +132,11 @@
                       role="status"
                       aria-hidden="true"
                     ></span>
-                    {{ loading ? 'Đang lưu...' : 'Thêm sản phẩm' }}
+                    {{ loading ? 'Đang lưu...' : (isEdit ? 'Cập nhật sản phẩm' : 'Thêm sản phẩm') }}
                   </button>
-                  <button
-                    type="button"
-                    class="btn btn-secondary"
-                    @click="resetForm"
-                    :disabled="loading"
-                  >
-                    Xóa form
-                  </button>
+                  <RouterLink :to="{ name: 'admin-products' }" class="btn btn-secondary">
+                    Hủy
+                  </RouterLink>
                 </div>
               </form>
             </div>
@@ -150,27 +148,52 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
-import { createBook, uploadImage } from '@/services/booksService'
+import { ref, reactive, onMounted, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { createBook, updateBook, getBookById, uploadImage } from '@/services/booksService'
 import { toast } from 'vue3-toastify'
 
+const route = useRoute()
 const router = useRouter()
 
 const loading = ref(false)
+const fetching = ref(false)
 const selectedFile = ref(null)
 const imagePreview = ref(null)
 
-const initialForm = {
+const isEdit = computed(() => !!route.params.id)
+
+const form = reactive({
   title: '',
   sku: '',
   price: null,
   stock: null,
   categoryId: null,
   description: '',
-}
+  imageUrl: ''
+})
 
-const form = reactive({ ...initialForm })
+const fetchProduct = async () => {
+  if (!isEdit.value) return
+  fetching.value = true
+  try {
+    const book = await getBookById(route.params.id)
+    form.title = book.title
+    form.sku = book.sku
+    form.price = book.price
+    form.stock = book.stock
+    form.description = book.description || ''
+    form.imageUrl = book.imageUrl || ''
+    if (book.categories && book.categories.length > 0) {
+      form.categoryId = book.categories[0].id
+    }
+  } catch (error) {
+    toast.error('Lỗi khi tải thông tin sản phẩm')
+    router.push({ name: 'admin-products' })
+  } finally {
+    fetching.value = false
+  }
+}
 
 const handleFileChange = (e) => {
   const file = e.target.files[0]
@@ -183,13 +206,6 @@ const handleFileChange = (e) => {
   }
 }
 
-const resetForm = () => {
-  Object.assign(form, initialForm)
-  selectedFile.value = null
-  imagePreview.value = null
-  document.getElementById('productImage').value = ''
-}
-
 const handleSubmit = async () => {
   if (!form.title || !form.sku || form.price === null || form.stock === null) {
     toast.warning('Vui lòng điền đầy đủ các trường bắt buộc')
@@ -198,9 +214,8 @@ const handleSubmit = async () => {
 
   loading.value = true
   try {
-    let imageUrl = ''
+    let imageUrl = form.imageUrl
 
-    // 1. Upload image if selected
     if (selectedFile.value) {
       toast.info('Đang tải ảnh lên...', { autoClose: 1500 })
       try {
@@ -208,13 +223,10 @@ const handleSubmit = async () => {
         imageUrl = uploadRes?.url || ''
       } catch (uploadError) {
         console.error('Error uploading image:', uploadError)
-        const message = uploadError instanceof Error ? uploadError.message : 'Upload ảnh thất bại'
-        toast.warning(`${message}. Tiếp tục tạo sản phẩm không có ảnh.`)
-        imageUrl = ''
+        toast.warning('Upload ảnh thất bại, sử dụng ảnh cũ.')
       }
     }
 
-    // 2. Create product
     const payload = {
       title: form.title,
       sku: form.sku,
@@ -228,14 +240,21 @@ const handleSubmit = async () => {
       payload.categoryIds = [Number(form.categoryId)]
     }
 
-    await createBook(payload)
-    toast.success('Thêm sản phẩm thành công!')
+    if (isEdit.value) {
+      await updateBook(route.params.id, payload)
+      toast.success('Cập nhật sản phẩm thành công!')
+    } else {
+      await createBook(payload)
+      toast.success('Thêm sản phẩm thành công!')
+    }
     router.push({ name: 'admin-products' })
   } catch (error) {
-    console.error('Error creating product:', error)
-    toast.error(error.message || 'Lỗi khi thêm sản phẩm')
+    console.error('Error saving product:', error)
+    toast.error(error.message || 'Lỗi khi lưu sản phẩm')
   } finally {
     loading.value = false
   }
 }
+
+onMounted(fetchProduct)
 </script>

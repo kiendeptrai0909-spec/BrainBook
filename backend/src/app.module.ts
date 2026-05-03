@@ -11,6 +11,11 @@ import { OrdersModule } from './orders/orders.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module'
 import { CategoriesModule } from './categories/categories.module';
+import { PostsModule } from './posts/posts.module';
+import { UsersModule } from './users/users.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { WishlistModule } from './wishlist/wishlist.module';
+import { CouponsModule } from './coupons/coupons.module';
 
 @Module({
   imports: [
@@ -28,6 +33,11 @@ import { CategoriesModule } from './categories/categories.module';
     AddressesModule,
     CloudinaryModule,
     CategoriesModule,
+    PostsModule,
+    UsersModule,
+    ReviewsModule,
+    WishlistModule,
+    CouponsModule,
   ],
   controllers: [HealthController],
 })

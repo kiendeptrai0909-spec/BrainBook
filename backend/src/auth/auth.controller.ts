@@ -19,6 +19,16 @@ export class AuthController {
     return this.auth.login(dto);
   }
 
+  @Post('google')
+  googleLogin(@Body('code') code: string) {
+    return this.auth.googleLogin(code);
+  }
+
+  @Post('refresh')
+  refresh(@Body('refresh_token') refreshToken: string) {
+    return this.auth.refresh(refreshToken);
+  }
+
   @Get('profile')
   @UseGuards(JwtAuthGuard)
   profile(@CurrentUser() user: JwtUser) {

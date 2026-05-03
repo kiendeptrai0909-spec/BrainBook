@@ -76,8 +76,8 @@
                   </a>
                   <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                     <li><h6 class="dropdown-header">My Account</h6></li>
-                    <li><a class="dropdown-item" href="#">Profile</a></li>
-                    <li><a class="dropdown-item" href="#">Orders</a></li>
+                    <li><RouterLink class="dropdown-item" to="/account">Dashboard</RouterLink></li>
+                    <li><RouterLink class="dropdown-item" to="/account">Orders</RouterLink></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item text-danger" href="#" @click.prevent="auth.logout()">Logout</a></li>
                   </ul>
@@ -183,32 +183,88 @@
                                 role="tabpanel"
                                 aria-labelledby="nav-register-tab"
                               >
-                               <form @submit.prevent="handleRegister">
-                                <div class="form-group py-3">
-                                  <label class="mb-2" for="register">Your email address *</label>
-                                  <input
-                                    type="email"
-                                    v-model="registerEmail"
-                                    placeholder="Your Email Address"
-                                    class="form-control w-100 rounded-3 p-3"
-                                    required
-                                  />
+                                <div v-if="regStep === 1">
+                                  <form @submit.prevent="regStep = 2" class="p-3">
+                                    <div class="mb-3">
+                                      <label class="small mb-1">Email address *</label>
+                                      <input v-model="registerEmail" type="email" placeholder="email@example.com" class="form-control" required />
+                                    </div>
+                                    <div class="mb-3">
+                                      <label class="small mb-1">Password *</label>
+                                      <input v-model="registerPassword" type="password" minlength="8" placeholder="At least 8 characters" class="form-control" required />
+                                    </div>
+                                    <div class="mb-3">
+                                      <label class="small mb-1">Confirm Password *</label>
+                                      <input v-model="registerConfirm" type="password" placeholder="Re-type password" class="form-control" required />
+                                      <div v-if="registerPassword && registerConfirm && registerPassword !== registerConfirm" class="text-danger small mt-1">
+                                        Passwords do not match
+                                      </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-dark w-100" :disabled="registerPassword !== registerConfirm">Next Step</button>
+                                  </form>
                                 </div>
-                                <div class="form-group pb-3">
-                                  <label class="mb-2" for="sign-in">Password *</label>
-                                  <input
-                                    type="password"
-                                    v-model="registerPassword"
-                                    minlength="8"
-                                    placeholder="Your Password (min 8 chars)"
-                                    class="form-control w-100 rounded-3 p-3"
-                                    required
-                                  />
+
+                                <div v-else-if="regStep === 2">
+                                  <form @submit.prevent="handleRegister" class="p-3">
+                                    <div class="row g-2 mb-3">
+                                      <div class="col-6">
+                                        <label class="small mb-1">First Name *</label>
+                                        <input v-model="registerFirst" type="text" placeholder="John" class="form-control" required />
+                                      </div>
+                                      <div class="col-6">
+                                        <label class="small mb-1">Last Name *</label>
+                                        <input v-model="registerLast" type="text" placeholder="Doe" class="form-control" required />
+                                      </div>
+                                    </div>
+                                    <div class="mb-3">
+                                      <label class="small mb-1">Phone Number</label>
+                                      <input v-model="registerPhone" type="tel" placeholder="0123456789" class="form-control" />
+                                    </div>
+                                    <div class="row g-2 mb-3">
+                                      <div class="col-6">
+                                        <label class="small mb-1">Birthday</label>
+                                        <input v-model="registerBirthday" type="date" class="form-control" />
+                                      </div>
+                                      <div class="col-6">
+                                        <label class="small mb-1">Gender</label>
+                                        <select v-model="registerGender" class="form-select">
+                                          <option value="">Other</option>
+                                          <option value="male">Male</option>
+                                          <option value="female">Female</option>
+                                        </select>
+                                      </div>
+                                    </div>
+                                    <div class="form-check mb-2">
+                                      <input class="form-check-input" type="checkbox" id="newsletter" v-model="registerNewsletter">
+                                      <label class="form-check-label small" for="newsletter">
+                                        I want to receive news and promotions
+                                      </label>
+                                    </div>
+                                    <div class="form-check mb-3">
+                                      <input class="form-check-input" type="checkbox" id="terms" v-model="registerTerms" required>
+                                      <label class="form-check-label small" for="terms">
+                                        I agree to the <a href="#" class="text-primary">Terms of Service</a> *
+                                      </label>
+                                    </div>
+                                    
+                                    <div class="d-flex gap-2">
+                                      <button type="button" @click="regStep = 1" class="btn btn-outline-dark w-50">Back</button>
+                                      <button type="submit" class="btn btn-dark w-50">Register</button>
+                                    </div>
+                                  </form>
                                 </div>
-                                <button type="submit" class="btn btn-dark w-100 my-3">
-                                  Register
-                                </button>
-                               </form>
+
+                                <div class="mt-4 pt-3 border-top text-center">
+                                  <p class="small text-muted mb-2">Or register with</p>
+                                  <div class="d-flex justify-content-center gap-2">
+                                    <button type="button" @click="googleLogin" class="btn btn-outline-danger btn-sm px-3">
+                                      <i class="ti ti-brand-google me-1"></i> Google
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary btn-sm px-3">
+                                      <i class="ti ti-brand-facebook me-1"></i> Facebook
+                                    </button>
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -348,16 +404,58 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { toast } from 'vue3-toastify'
 import { useAuthStore } from '../stores/auth'
 import { useCartStore } from '../stores/cart'
+import { apiClient } from '@/services/api'
 
+const router = useRouter()
 const auth = useAuthStore()
 const cart = useCartStore()
 
 const loginEmail = ref('')
 const loginPassword = ref('')
+
+const regStep = ref(1)
 const registerEmail = ref('')
 const registerPassword = ref('')
+const registerConfirm = ref('')
+const registerFirst = ref('')
+const registerLast = ref('')
+const registerPhone = ref('')
+const registerBirthday = ref('')
+const registerGender = ref('')
+const registerNewsletter = ref(false)
+const registerTerms = ref(false)
+
+import { useCodeClient } from 'vue3-google-signin'
+
+const { login: googleLogin } = useCodeClient({
+  onSuccess: async (response) => {
+    try {
+      const res = await apiClient.post('/auth/google', { code: response.code })
+      if (res.access_token) {
+        auth.setTokens(res.access_token, res.refresh_token)
+        await auth.fetchProfile()
+        toast.success('Login with Google successful!')
+        
+        const modalEl = document.getElementById('exampleModal')
+        const modal = window.bootstrap.Modal.getInstance(modalEl)
+        if (modal) modal.hide()
+        
+        cart.fetchCart()
+        router.push('/')
+        // Force reload to ensure all components (especially the modal) are cleaned up
+        window.location.reload()
+      }
+    } catch (e) {
+      console.error('Google Login Backend Error:', e)
+      toast.error('Google login failed: ' + (e.message || 'Server error'))
+    }
+  },
+  onError: () => toast.error('Google Login Error'),
+})
 
 async function handleLogin() {
   const success = await auth.login(loginEmail.value, loginPassword.value)
@@ -373,13 +471,32 @@ async function handleLogin() {
 }
 
 async function handleRegister() {
-  const success = await auth.register(registerEmail.value, registerPassword.value)
+  if (registerPassword.value !== registerConfirm.value) {
+    toast.error('Passwords do not match')
+    return
+  }
+  
+  const success = await auth.register({
+    email: registerEmail.value,
+    password: registerPassword.value,
+    firstName: registerFirst.value,
+    lastName: registerLast.value,
+    phone: registerPhone.value,
+    birthday: registerBirthday.value,
+    gender: registerGender.value,
+    newsletter: registerNewsletter.value
+  })
+  
   if (success) {
+    // Reset step
+    regStep.value = 1
     // Switch to login tab
     const loginTab = document.getElementById('nav-sign-in-tab')
     if (loginTab) {
-      window.bootstrap.Tab.getInstance(loginTab)?.show() || new window.bootstrap.Tab(loginTab).show()
+      const tab = window.bootstrap?.Tab?.getInstance(loginTab) || new window.bootstrap.Tab(loginTab)
+      tab.show()
     }
+    toast.info('Registration successful! Please login.')
   }
 }
 </script>

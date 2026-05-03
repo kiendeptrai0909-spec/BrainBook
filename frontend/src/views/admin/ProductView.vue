@@ -76,8 +76,12 @@
                   <td>{{ book.format }}</td>
                   <td>{{ book.stock }}</td>
                   <td class="">
-                    <a href="#" class=""><i class="ti ti-edit"></i></a>
-                    <a href="#" class="link-danger"><i class="ti ti-trash ms-2"></i></a>
+                    <RouterLink :to="{ name: 'admin-edit-product', params: { id: book.id } }" class="btn btn-sm btn-outline-primary me-2">
+                      <i class="ti ti-edit"></i>
+                    </RouterLink>
+                    <button @click="handleDelete(book.id)" class="btn btn-sm btn-outline-danger">
+                      <i class="ti ti-trash"></i>
+                    </button>
                   </td>
                 </tr>
                 <tr v-if="books.length === 0">
@@ -119,7 +123,7 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue'
-import { getBooks } from '@/services/booksService'
+import { getBooks, deleteBook } from '@/services/booksService'
 import { toast } from 'vue3-toastify'
 
 const books = ref([])
@@ -148,6 +152,17 @@ const fetchProducts = async () => {
     toast.error('Lỗi khi tải danh sách sản phẩm')
   } finally {
     loading.value = false
+  }
+}
+
+const handleDelete = async (id) => {
+  if (!confirm('Bạn có chắc chắn muốn xóa sản phẩm này?')) return
+  try {
+    await deleteBook(id)
+    toast.success('Xóa sản phẩm thành công!')
+    fetchProducts()
+  } catch (error) {
+    toast.error('Lỗi khi xóa sản phẩm')
   }
 }
 

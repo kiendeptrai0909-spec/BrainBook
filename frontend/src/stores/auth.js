@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { toast } from 'vue3-toastify'
 import { apiPost, apiGet } from '@/lib/api'
-import { clearAccessToken, getAccessToken, setAccessToken } from '@/services/api'
+import { clearAuth, getAccessToken, setAccessToken, setRefreshToken } from '@/services/api'
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref(getAccessToken() || null)
@@ -10,31 +10,33 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isLoggedIn = computed(() => !!token.value)
 
-  function setToken(nextToken) {
-    token.value = nextToken || null
-    if (nextToken) {
-      setAccessToken(nextToken)
-      localStorage.setItem('token', nextToken)
-    } else {
-      clearAccessToken()
-      localStorage.removeItem('token')
+  function setTokens(accessToken, refreshToken) {
+    token.value = accessToken || null
+    if (accessToken) {
+      setAccessToken(accessToken)
+    }
+    if (refreshToken) {
+      setRefreshToken(refreshToken)
+    }
+    if (!accessToken && !refreshToken) {
+      clearAuth()
     }
   }
 
   async function login(email, password) {
     try {
       const data = await apiPost('/auth/login', { body: { email, password } })
-
-      const nextToken =
-        data.accessToken || data.access_token || data.token || data?.data?.accessToken
-      if (!nextToken) {
+      const accessToken = data.access_token || data.accessToken || data.token
+      const refreshToken = data.refresh_token
+      
+      if (!accessToken) {
         throw new Error('Không nhận được token đăng nhập')
       }
 
-      setToken(nextToken)
+      setTokens(accessToken, refreshToken)
+      user.value = data.user
 
-      toast.success('Logged in successfully!')
-      await fetchProfile()
+      toast.success('Đăng nhập thành công!')
       return true
     } catch (err) {
       toast.error(err.message)
@@ -42,11 +44,19 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function register(email, password) {
+  async function register(payload) {
     try {
-      await apiPost('/auth/register', { body: { email, password } })
-      toast.success('Registration successful! Please login.')
-      return true
+      const data = await apiPost('/auth/register', { body: payload })
+      const accessToken = data.access_token || data.accessToken || data.token
+      const refreshToken = data.refresh_token
+      
+      if (accessToken) {
+        setTokens(accessToken, refreshToken)
+        user.value = data.user
+        toast.success('Đăng ký thành công!')
+        return true
+      }
+      return false
     } catch (err) {
       toast.error(err.message)
       return false
@@ -56,22 +66,20 @@ export const useAuthStore = defineStore('auth', () => {
   async function fetchProfile() {
     if (!token.value) return
     try {
-      const data = await apiGet('/auth/profile', {
-        headers: { Authorization: `Bearer ${token.value}` },
-      })
+      const data = await apiGet('/auth/profile')
       user.value = data
     } catch (err) {
       console.error(err)
-      logout() // Invalid token
+      // If profile fails, it might be due to expired token
+      // the api interceptor will try to refresh. 
+      // If it still fails, then we logout.
     }
   }
 
   function logout() {
-    setToken(null)
+    setTokens(null, null)
     user.value = null
-    toast.info('Logged out.')
-
-    // Quick reload to clear state, or just emit event
+    toast.info('Đã đăng xuất.')
     window.location.reload()
   }
 
@@ -80,5 +88,5 @@ export const useAuthStore = defineStore('auth', () => {
     fetchProfile()
   }
 
-  return { token, user, isLoggedIn, login, register, logout, fetchProfile, setToken }
+  return { token, user, isLoggedIn, login, register, logout, fetchProfile, setTokens }
 })

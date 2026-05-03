@@ -138,15 +138,19 @@
       />
     </symbol>
   </svg>
-  <AppHeader />
+  <AppHeader v-if="!isAdminRoute" />
   <RouterView />
-  <AppFooter />
+  <AppFooter v-if="!isAdminRoute" />
 </template>
 
 <script setup>
-import { RouterView } from 'vue-router'
+import { computed } from 'vue'
+import { RouterView, useRoute } from 'vue-router'
 import AppHeader from './components/AppHeader.vue'
 import AppFooter from './components/AppFooter.vue'
+
+const route = useRoute()
+const isAdminRoute = computed(() => route.matched.some((record) => record.meta.isAdmin))
 </script>
 
 <style>

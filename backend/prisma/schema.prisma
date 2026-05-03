@@ -79,6 +79,9 @@ model User {
   firstName    String?
   lastName     String?
   phone        String?
+  birthday     DateTime?
+  gender       String?
+  newsletter   Boolean   @default(false)
   role         UserRole  @default(CUSTOMER)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
@@ -88,6 +91,21 @@ model User {
   orders    Order[]
   addresses Address[]
   couponUsages CouponUsage[]
+  refreshTokens RefreshToken[]
+  reviews       Review[]
+  wishlist      Wishlist?
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 /// Saved shipping/billing book for logged-in users (reuse at checkout). Guest orders omit this FK.
@@ -179,6 +197,8 @@ model Book {
   tags         BookTag[]
   cartItems    CartItem[]
   orderItems   OrderItem[]
+  reviews      Review[]
+  wishlistItems WishlistItem[]
 
   @@index([isActive, price, createdAt])
   @@index([price])
@@ -440,4 +460,50 @@ model AuditLog {
 
   @@index([entity, entityId])
   @@index([userId])
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  title     String
+  slug      String   @unique
+  content   String   @db.Text
+  excerpt   String?  @db.Text
+  thumbnail String?
+  author    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  bookId    Int
+  userId    String?
+  userName  String
+  rating    Int      @default(5)
+  comment   String   @db.Text
+  createdAt DateTime @default(now())
+
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([bookId])
+  @@index([userId])
+}
+
+model Wishlist {
+  userId    String @id
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     WishlistItem[]
+}
+
+model WishlistItem {
+  id         String   @id @default(cuid())
+  wishlistId String
+  bookId     Int
+  createdAt  DateTime @default(now())
+
+  wishlist   Wishlist @relation(fields: [wishlistId], references: [userId], onDelete: Cascade)
+  book       Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@unique([wishlistId, bookId])
 }
