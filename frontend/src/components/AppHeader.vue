@@ -241,9 +241,9 @@
                                       </label>
                                     </div>
                                     <div class="form-check mb-3">
-                                      <input class="form-check-input" type="checkbox" id="terms" v-model="registerTerms" required>
+                                      <input class="form-input-check" type="checkbox" id="terms" v-model="registerTerms" required>
                                       <label class="form-check-label small" for="terms">
-                                        I agree to the <a href="#" class="text-primary">Terms of Service</a> *
+                                        I agree to the <a href="#" class="text-primary" data-bs-dismiss="modal">Terms of Service</a> *
                                       </label>
                                     </div>
                                     
@@ -259,9 +259,6 @@
                                   <div class="d-flex justify-content-center gap-2">
                                     <button type="button" @click="googleLogin" class="btn btn-outline-danger btn-sm px-3">
                                       <i class="ti ti-brand-google me-1"></i> Google
-                                    </button>
-                                    <button type="button" class="btn btn-outline-primary btn-sm px-3">
-                                      <i class="ti ti-brand-facebook me-1"></i> Facebook
                                     </button>
                                   </div>
                                 </div>
@@ -429,6 +426,20 @@ const registerGender = ref('')
 const registerNewsletter = ref(false)
 const registerTerms = ref(false)
 
+// Hàm dọn dẹp Modal Bootstrap để tránh lỗi màn hình tối
+const cleanupModal = () => {
+  const modalEl = document.getElementById('exampleModal')
+  if (modalEl) {
+    const modal = window.bootstrap?.Modal?.getInstance(modalEl)
+    if (modal) modal.hide()
+  }
+  // Xóa thủ công các thành phần còn sót lại
+  document.querySelectorAll('.modal-backdrop').forEach(el => el.remove())
+  document.body.classList.remove('modal-open')
+  document.body.style.overflow = ''
+  document.body.style.paddingRight = ''
+}
+
 import { useCodeClient } from 'vue3-google-signin'
 
 const { login: googleLogin } = useCodeClient({
@@ -440,14 +451,17 @@ const { login: googleLogin } = useCodeClient({
         await auth.fetchProfile()
         toast.success('Login with Google successful!')
         
-        const modalEl = document.getElementById('exampleModal')
-        const modal = window.bootstrap.Modal.getInstance(modalEl)
-        if (modal) modal.hide()
-        
+        cleanupModal()
         cart.fetchCart()
-        router.push('/')
+        
+        if (auth.user?.role === 'ADMIN') {
+          router.push('/admin')
+        } else {
+          router.push('/')
+        }
+        
         // Force reload to ensure all components (especially the modal) are cleaned up
-        window.location.reload()
+        setTimeout(() => window.location.reload(), 500)
       }
     } catch (e) {
       console.error('Google Login Backend Error:', e)
@@ -460,13 +474,14 @@ const { login: googleLogin } = useCodeClient({
 async function handleLogin() {
   const success = await auth.login(loginEmail.value, loginPassword.value)
   if (success) {
-    // Close modal
-    const modalEl = document.getElementById('exampleModal')
-    const modal = window.bootstrap.Modal.getInstance(modalEl)
-    if (modal) modal.hide()
+    cleanupModal()
     
     // Refresh cart
     cart.fetchCart()
+
+    if (auth.user?.role === 'ADMIN') {
+      router.push('/admin')
+    }
   }
 }
 

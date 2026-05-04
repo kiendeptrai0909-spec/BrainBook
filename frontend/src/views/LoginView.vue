@@ -24,8 +24,14 @@
                 {{ loading ? 'Logging in...' : 'Login' }}
               </button>
             </form>
-            <div class="text-center mt-4">
-              <p class="small text-muted">Don't have an account? 
+            <div class="text-center mt-4 pt-3 border-top">
+              <p class="small text-muted mb-3">Or login with</p>
+              <div class="d-grid gap-2">
+                <button type="button" @click="googleLogin" class="btn btn-outline-danger d-flex align-items-center justify-content-center gap-2 py-2">
+                  <i class="ti ti-brand-google fs-5"></i> Google
+                </button>
+              </div>
+              <p class="small text-muted mt-4">Don't have an account? 
                 <RouterLink to="/register" class="text-primary fw-bold text-decoration-none">Register here</RouterLink>
               </p>
             </div>
@@ -41,9 +47,15 @@ import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
+import { toast } from 'vue3-toastify'
+import { useCodeClient } from 'vue3-google-signin'
+import { apiClient } from '@/services/api'
+import { useCartStore } from '@/stores/cart'
+
 const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
+const cart = useCartStore()
 
 const email = ref('')
 const password = ref('')
@@ -54,8 +66,38 @@ const handleLogin = async () => {
   const success = await auth.login(email.value, password.value)
   loading.value = false
   if (success) {
-    const redirect = route.query.redirect || '/'
-    router.push(redirect)
+    cart.fetchCart()
+    if (auth.user?.role === 'ADMIN') {
+      router.push('/admin')
+    } else {
+      const redirect = route.query.redirect || '/'
+      router.push(redirect)
+    }
   }
 }
+
+const { login: googleLogin } = useCodeClient({
+  onSuccess: async (response) => {
+    try {
+      const res = await apiClient.post('/auth/google', { code: response.code })
+      if (res.access_token) {
+        auth.setTokens(res.access_token, res.refresh_token)
+        await auth.fetchProfile()
+        toast.success('Login with Google successful!')
+        cart.fetchCart()
+        
+        if (auth.user?.role === 'ADMIN') {
+          router.push('/admin')
+        } else {
+          router.push('/')
+        }
+        
+        setTimeout(() => window.location.reload(), 500)
+      }
+    } catch (e) {
+      toast.error('Google login failed')
+    }
+  },
+  onError: () => toast.error('Google Login Error'),
+})
 </script>
