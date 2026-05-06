@@ -12,7 +12,7 @@ export class QueryBooksDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(48)
+  @Max(200)
   limit?: number = 12;
 
   @IsOptional()
@@ -26,6 +26,14 @@ export class QueryBooksDto {
   @IsOptional()
   @IsString()
   sort?: string;
+
+  @IsOptional()
+  @Type(() => Boolean)
+  isActive?: boolean;
+
+  @IsOptional()
+  @Type(() => Boolean)
+  showAll?: boolean;
 
   @IsOptional()
   @Type(() => Number)

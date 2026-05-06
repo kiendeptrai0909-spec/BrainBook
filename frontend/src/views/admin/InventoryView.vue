@@ -75,7 +75,8 @@ const loading = ref(false)
 const fetchProducts = async () => {
   loading.value = true
   try {
-    const res = await getBooks({ limit: 100 })
+    // We want to see all products in inventory management
+    const res = await getBooks({ limit: 50, showAll: true })
     books.value = (res.data || []).map(b => ({ ...b, changed: false }))
   } catch (error) {
     console.error('Failed to fetch books', error)

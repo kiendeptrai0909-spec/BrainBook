@@ -23,6 +23,10 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  function setToken(accessToken) {
+    setTokens(accessToken, null)
+  }
+
   async function login(email, password) {
     try {
       const data = await apiPost('/auth/login', { body: { email, password } })
@@ -88,5 +92,5 @@ export const useAuthStore = defineStore('auth', () => {
     fetchProfile()
   }
 
-  return { token, user, isLoggedIn, login, register, logout, fetchProfile, setTokens }
+  return { token, user, isLoggedIn, login, register, logout, fetchProfile, setTokens, setToken }
 })

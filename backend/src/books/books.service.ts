@@ -76,7 +76,14 @@ export class BooksService {
     const limit = dto.limit ?? 12;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.BookWhereInput = { isActive: true };
+    const where: Prisma.BookWhereInput = {};
+    if (dto.showAll) {
+      // Don't filter by isActive
+    } else if (dto.isActive !== undefined) {
+      where.isActive = dto.isActive;
+    } else {
+      where.isActive = true;
+    }
     if (dto.q?.trim()) {
       const q = dto.q.trim();
       where.OR = [
@@ -141,7 +148,9 @@ export class BooksService {
       imageUrl: book.imageUrl,
       description: book.description,
       longDescription: book.longDescription,
-      stock: Math.max(0, (book.inventory?.stock ?? 0) - (book.inventory?.reserved ?? 0)),
+      stock: book.inventory?.stock ?? 0,
+      reserved: book.inventory?.reserved ?? 0,
+      available: Math.max(0, (book.inventory?.stock ?? 0) - (book.inventory?.reserved ?? 0)),
       format: book.format,
       publisher: book.publisher?.name ?? null,
       language: book.language,

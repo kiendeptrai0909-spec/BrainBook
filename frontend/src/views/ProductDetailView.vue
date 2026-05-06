@@ -119,39 +119,39 @@
             <div class="purchase-box p-4 bg-light rounded-5 mb-4 border shadow-sm">
               <div class="row g-3">
                 <div class="col-md-4">
-                  <label class="form-label small fw-bolder text-dark uppercase tracking-tighter mb-2">QUANTITY</label>
-                  <div class="quantity-picker d-flex align-items-center bg-white rounded-pill p-1 border shadow-sm" :class="{'border-danger': quantity >= book.stock}">
-                    <button class="btn btn-icon rounded-circle" @click="quantity > 1 ? quantity-- : null">
+                  <label class="form-label small fw-bolder text-dark uppercase tracking-tighter mb-2">SỐ LƯỢNG</label>
+                  <div class="quantity-picker d-flex align-items-center bg-white rounded-pill p-1 border shadow-sm" :class="{'border-danger': quantity >= (book.available || 0)}">
+                    <button class="btn btn-qty rounded-circle" @click="quantity > 1 ? quantity-- : null">
                       <i class="ti ti-minus"></i>
                     </button>
-                    <input type="number" class="form-control border-0 bg-transparent text-center fw-bold px-0 text-dark" v-model="quantity" style="width: 50px" readonly />
-                    <button class="btn btn-icon rounded-circle" @click="quantity < (book.stock || 0) ? quantity++ : null" :disabled="quantity >= book.stock">
+                    <input type="number" class="form-control border-0 bg-transparent text-center fw-bold px-0 text-dark" v-model="quantity" style="width: 40px" readonly />
+                    <button class="btn btn-qty rounded-circle" @click="quantity < (book.available || 0) ? quantity++ : null" :disabled="quantity >= (book.available || 0)">
                       <i class="ti ti-plus"></i>
                     </button>
                   </div>
-                  <div v-if="book.stock <= 5 && book.stock > 0" class="small text-danger mt-1 fw-bold">
-                    Only {{ book.stock }} left in stock!
+                  <div v-if="book.available <= 5 && book.available > 0" class="small text-danger mt-1 fw-bold">
+                    Chỉ còn {{ book.available }} cuốn!
                   </div>
-                  <div v-else-if="book.stock <= 0" class="small text-danger mt-1 fw-bold">
-                    Out of stock
+                  <div v-else-if="book.available <= 0" class="small text-danger mt-1 fw-bold">
+                    Hết hàng
                   </div>
                 </div>
                 <div class="col-md-8 d-flex align-items-end gap-2">
                   <button
                     type="button"
                     @click="addToCart"
-                    :disabled="book.stock <= 0"
+                    :disabled="book.available <= 0"
                     class="btn btn-dark btn-lg px-4 py-3 rounded-pill flex-grow-1 shadow-premium d-flex align-items-center justify-content-center gap-2 transition-all-3"
                   >
-                    <i class="ti ti-shopping-cart fs-4"></i> {{ book.stock <= 0 ? 'OUT OF STOCK' : 'ADD TO CART' }}
+                    <i class="ti ti-shopping-cart fs-4"></i> {{ (book.available <= 0) ? 'HẾT HÀNG' : 'THÊM VÀO GIỎ HÀNG' }}
                   </button>
-                  <button @click="toggleWishlist" class="btn btn-icon btn-outline-danger rounded-circle shadow-sm bg-white" style="width: 58px; height: 58px; flex-shrink:0;">
-                    <i class="ti fs-3" :class="isInWishlist ? 'ti-heart-filled' : 'ti-heart'"></i>
+                  <button @click="toggleWishlist" class="btn btn-wishlist rounded-circle shadow-sm bg-white d-flex align-items-center justify-content-center" style="width: 58px; height: 58px; flex-shrink:0;">
+                    <i class="ti fs-3" :class="isInWishlist ? 'ti-heart-filled text-danger' : 'ti-heart text-danger'"></i>
                   </button>
                 </div>
-                <div class="col-12 mt-3" v-if="book.stock > 0">
+                <div class="col-12 mt-3" v-if="book.available > 0">
                   <button @click="buyNow" class="btn btn-buy-now w-100 py-3 rounded-pill fw-bold shadow-sm transition-all-3">
-                    <i class="ti ti-bolt me-2"></i> BUY IT NOW
+                    <i class="ti ti-bolt me-2"></i> MUA NGAY
                   </button>
                 </div>
               </div>
@@ -566,11 +566,17 @@ watch(() => route.params.slug, (newSlug) => {
 .h-icon { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
 .bg-primary-subtle { background: #fff1f2; }
 
-.btn-icon {
-  width: 38px; height: 38px; padding: 0; display: flex; align-items: center; justify-content: center;
-  border: 1px solid #ddd; background: #fff; transition: all 0.2s;
+.btn-qty {
+  width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;
+  border: 1px solid #eee; background: #fff; color: #666; transition: all 0.2s; font-size: 0.8rem;
 }
-.btn-icon:hover { background: var(--bs-primary); color: white; border-color: var(--bs-primary); }
+.btn-qty:hover:not(:disabled) { background: #f8f9fa; color: #000; border-color: #ccc; }
+.btn-qty:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-wishlist {
+  border: 1px solid #eee; transition: all 0.3s;
+}
+.btn-wishlist:hover { transform: scale(1.05); border-color: #ff4b2b; }
 
 .share-icon {
   width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
