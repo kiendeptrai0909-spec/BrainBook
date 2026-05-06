@@ -15,9 +15,38 @@ export class CreateBookDto {
   @Min(0)
   stock: number;
 
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  compareAtPrice?: number;
+
   @IsString()
   @IsOptional()
   description?: string;
+
+  @IsString()
+  @IsOptional()
+  longDescription?: string;
+
+  @IsString()
+  @IsOptional()
+  format?: string;
+
+  @IsString()
+  @IsOptional()
+  language?: string;
+
+  @IsNumber()
+  @IsOptional()
+  pageCount?: number;
+
+  @IsString()
+  @IsOptional()
+  isbn10?: string;
+
+  @IsString()
+  @IsOptional()
+  dimensions?: string;
 
   @IsString()
   @IsOptional()

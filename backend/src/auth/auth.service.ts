@@ -7,12 +7,21 @@ import { PrismaService } from '../prisma/prisma.service';
 import { JwtPayload } from './jwt.strategy';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+<<<<<<< HEAD
+=======
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { MailService } from '../mail/mail.service';
+import { v4 as uuidv4 } from 'uuid';
+import { ConfigService } from '@nestjs/config';
+>>>>>>> 30b9b13 (feat: implement password recovery, optimize database schema, and fix registration flow errors)
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
+    private readonly configService: ConfigService,
+    private readonly mailService: MailService,
   ) {}
 
   private readonly googleClient = new OAuth2Client(
@@ -138,6 +147,40 @@ export class AuthService {
     return user;
   }
 
+<<<<<<< HEAD
+=======
+  async updateProfile(userId: string, dto: UpdateProfileDto) {
+    const data: any = {};
+    if (dto.firstName !== undefined) data.firstName = dto.firstName?.trim() || null;
+    if (dto.lastName !== undefined) data.lastName = dto.lastName?.trim() || null;
+    if (dto.phone !== undefined) data.phone = dto.phone?.trim() || null;
+    if (dto.gender !== undefined) data.gender = dto.gender;
+    if (dto.newsletter !== undefined) data.newsletter = dto.newsletter;
+    if (dto.birthday !== undefined) {
+      data.birthday = dto.birthday ? new Date(dto.birthday) : null;
+    }
+
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data,
+      select: { 
+        id: true, 
+        email: true, 
+        firstName: true, 
+        lastName: true, 
+        phone: true, 
+        birthday: true,
+        gender: true,
+        newsletter: true,
+        role: true, 
+        createdAt: true 
+      },
+    });
+
+    return user;
+  }
+
+>>>>>>> 30b9b13 (feat: implement password recovery, optimize database schema, and fix registration flow errors)
   private sign(sub: string, email: string, role: string) {
     const payload: JwtPayload = { sub, email, role };
     return this.jwt.sign(payload);
@@ -152,5 +195,67 @@ export class AuthService {
     if (!cart) {
       await this.prisma.cart.create({ data: { userId, status: 'ACTIVE' } });
     }
+  }
+
+  async forgotPassword(email: string) {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      // Don't reveal if user exists for security, just say if success
+      return { message: 'If your email is registered, you will receive a reset link.' };
+    }
+
+    // Create token
+    const token = uuidv4();
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 1); // 1 hour expiry
+
+    await this.prisma.passwordReset.upsert({
+      where: { token }, // This is technically unique, but we want to clean up old ones for this email usually. 
+      // For simplicity in this demo, just create. 
+      create: {
+        email,
+        token,
+        expiresAt,
+      },
+      update: {
+        token,
+        expiresAt,
+      },
+    });
+
+    try {
+      await this.mailService.sendPasswordResetEmail(email, token);
+    } catch (error) {
+      console.error('Mail error:', error);
+      throw new Error('Failed to send email');
+    }
+
+    return { message: 'If your email is registered, you will receive a reset link.' };
+  }
+
+  async resetPassword(dto: any) {
+    const { token, password } = dto;
+
+    const resetRecord = await this.prisma.passwordReset.findUnique({
+      where: { token },
+    });
+
+    if (!resetRecord || resetRecord.expiresAt < new Date()) {
+      throw new UnauthorizedException('Token is invalid or expired');
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { email: resetRecord.email },
+        data: { passwordHash },
+      }),
+      this.prisma.passwordReset.delete({
+        where: { id: resetRecord.id },
+      }),
+    ]);
+
+    return { success: true, message: 'Password reset successful' };
   }
 }

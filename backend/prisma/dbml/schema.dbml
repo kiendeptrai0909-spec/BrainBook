@@ -1,0 +1,432 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table User {
+  id String [pk]
+  email String [unique, not null]
+  passwordHash String [not null]
+  firstName String
+  lastName String
+  phone String
+  birthday DateTime
+  gender String
+  newsletter Boolean [not null, default: false]
+  role UserRole [not null, default: 'CUSTOMER']
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  deletedAt DateTime
+  carts Cart [not null]
+  orders Order [not null]
+  addresses Address [not null]
+  couponUsages CouponUsage [not null]
+  refreshTokens RefreshToken [not null]
+  reviews Review [not null]
+  wishlist Wishlist
+
+  Note: 'Login / register from AppHeader (optional for guest checkout)'
+}
+
+Table RefreshToken {
+  id String [pk]
+  token String [unique, not null]
+  userId String [not null]
+  expiresAt DateTime [not null]
+  createdAt DateTime [default: `now()`, not null]
+  user User [not null]
+}
+
+Table PasswordReset {
+  id String [pk]
+  email String [not null]
+  token String [unique, not null]
+  expiresAt DateTime [not null]
+  createdAt DateTime [default: `now()`, not null]
+}
+
+Table Address {
+  id String [pk]
+  userId String [not null]
+  label String
+  firstName String [not null]
+  lastName String [not null]
+  phone String
+  countryCode String [not null]
+  city String [not null]
+  addressLine1 String [not null]
+  addressLine2 String
+  isDefault Boolean [not null, default: false]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  user User [not null]
+  ordersShipping Order [not null]
+
+  Note: 'Saved shipping/billing book for logged-in users (reuse at checkout). Guest orders omit this FK.'
+}
+
+Table Category {
+  id Int [pk, increment]
+  name String [not null]
+  slug String [unique, not null]
+  createdAt DateTime [default: `now()`, not null]
+  books BookCategory [not null]
+}
+
+Table Author {
+  id Int [pk, increment]
+  name String [unique, not null]
+  createdAt DateTime [default: `now()`, not null]
+  books Book [not null]
+}
+
+Table Publisher {
+  id Int [pk, increment]
+  name String [unique, not null]
+  createdAt DateTime [default: `now()`, not null]
+  books Book [not null]
+}
+
+Table Book {
+  id Int [pk, increment]
+  sku String [unique, not null]
+  slug String [unique, not null]
+  title String [not null]
+  authorId Int [not null]
+  price Decimal [not null]
+  compareAtPrice Decimal
+  imageUrl String [not null]
+  imagePublicId String
+  description String [not null]
+  longDescription String
+  format String [not null]
+  publisherId Int
+  language String
+  pageCount Int
+  isbn10 String
+  dimensions String
+  ratingAvg Decimal
+  reviewCount Int [not null, default: 0]
+  isActive Boolean [not null, default: true]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  author Author [not null]
+  publisher Publisher
+  inventory Inventory
+  images BookImage [not null]
+  categories BookCategory [not null]
+  cartItems CartItem [not null]
+  orderItems OrderItem [not null]
+  reviews Review [not null]
+  wishlistItems WishlistItem [not null]
+
+  Note: 'Shop grid + product detail + cart line (id, name, author, image, price)'
+}
+
+Table Inventory {
+  bookId Int [pk]
+  stock Int [not null]
+  reserved Int [not null, default: 0]
+  updatedAt DateTime [not null]
+  book Book [not null]
+}
+
+Table BookImage {
+  id Int [pk, increment]
+  bookId Int [not null]
+  url String [not null]
+  sortOrder Int [not null, default: 0]
+  book Book [not null]
+
+  Note: 'Extra gallery images on product detail (thumbnails)'
+}
+
+Table BookCategory {
+  bookId Int [not null]
+  categoryId Int [not null]
+  book Book [not null]
+  category Category [not null]
+
+  indexes {
+    (bookId, categoryId) [pk]
+  }
+}
+
+Table Cart {
+  id String [pk]
+  userId String
+  sessionId String
+  status CartStatus [not null, default: 'ACTIVE']
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  user User
+  items CartItem [not null]
+
+  Note: 'Server-side cart. At most one ACTIVE cart per user (@unique on userId). Guest carts keyed by sessionId + status in app (no unique on sessionId).'
+}
+
+Table CartItem {
+  id Int [pk, increment]
+  cartId String [not null]
+  bookId Int [not null]
+  quantity Int [not null, default: 1]
+  titleSnapshot String [not null]
+  authorSnapshot String [not null]
+  imageUrlSnapshot String [not null]
+  unitPriceSnapshot Decimal [not null]
+  lineTotalSnapshot Decimal [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  cart Cart [not null]
+  book Book [not null]
+
+  indexes {
+    (cartId, bookId) [unique]
+  }
+}
+
+Table Order {
+  id String [pk]
+  orderNumber String [unique, not null, note: 'Human-readable ref; **must be set in the app** before insert (Prisma cannot encode daily sequence here). Suggested: ORD-{YYYYMMDD}-{seq4} e.g. ORD-20260418-0001 (per-day counter in DB or Redis), or `nanoid()` / `cuid()` if you prefer opaque IDs.']
+  status OrderStatus [not null, default: 'PENDING']
+  paymentMethod PaymentMethod [not null]
+  subtotal Decimal [not null]
+  shippingAmount Decimal [not null]
+  shippingLabel String
+  total Decimal [not null]
+  currency String [not null, default: 'USD']
+  customerFirstName String [not null]
+  customerLastName String [not null]
+  customerEmail String [not null]
+  customerPhone String [not null]
+  countryCode String [not null]
+  city String [not null]
+  addressLine1 String [not null]
+  addressLine2 String
+  orderNotes String
+  shippingAddressId String
+  couponCode String
+  couponDiscount Decimal
+  idempotencyKey String [unique]
+  userId String
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  deletedAt DateTime
+  user User
+  shippingAddress Address
+  items OrderItem [not null]
+  payments Payment [not null]
+  couponUsages CouponUsage [not null]
+
+  Note: 'Checkout: `customer*` / address lines = immutable snapshot at purchase time (legal + history). Optional `shippingAddressId` = which saved Address template was used (if any).'
+}
+
+Table Payment {
+  id String [pk]
+  orderId String [not null]
+  method PaymentMethod [not null]
+  status PaymentStatus [not null, default: 'PENDING']
+  amount Decimal [not null]
+  currency String [not null, default: 'USD']
+  transactionId String [unique]
+  externalReference String [unique]
+  failureReason String
+  metadata Json
+  paidAt DateTime
+  refundedAt DateTime
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  order Order [not null]
+
+  Note: 'One or more attempts / captures per order (COD pending → CAPTURED on delivery, PayPal webhooks, partial refunds, etc.).'
+}
+
+Table OrderItem {
+  id Int [pk, increment]
+  orderId String [not null]
+  bookId Int
+  titleSnapshot String [not null]
+  authorSnapshot String [not null]
+  imageUrlSnapshot String [not null]
+  unitPrice Decimal [not null]
+  quantity Int [not null]
+  lineTotal Decimal [not null]
+  order Order [not null]
+  book Book
+
+  Note: 'Snapshot fields so history stays correct if Book changes'
+}
+
+Table Coupon {
+  id Int [pk, increment]
+  code String [unique, not null]
+  type CouponType [not null]
+  value Decimal [not null]
+  minSubtotal Decimal
+  maxUses Int
+  expiresAt DateTime
+  isActive Boolean [not null, default: true]
+  createdAt DateTime [default: `now()`, not null]
+  deletedAt DateTime
+  usages CouponUsage [not null]
+
+  Note: 'Cart page “Apply Coupon”'
+}
+
+Table CouponUsage {
+  id Int [pk, increment]
+  couponId Int [not null]
+  userId String
+  orderId String [not null]
+  usedAt DateTime [default: `now()`, not null]
+  coupon Coupon [not null]
+  user User
+  order Order [not null]
+
+  indexes {
+    (couponId, userId) [unique]
+  }
+}
+
+Table ContactMessage {
+  id Int [pk, increment]
+  name String [not null]
+  email String [not null]
+  phone String
+  orderNumber String
+  subject String [not null]
+  message String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  readAt DateTime
+
+  Note: 'Contact form: name, email, phone, order number, subject, message'
+}
+
+Table Post {
+  id Int [pk, increment]
+  title String [not null]
+  slug String [unique, not null]
+  content String [not null]
+  excerpt String
+  thumbnail String
+  author String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table Review {
+  id String [pk]
+  bookId Int [not null]
+  userId String
+  userName String [not null]
+  rating Int [not null, default: 5]
+  comment String [not null]
+  createdAt DateTime [default: `now()`, not null]
+  book Book [not null]
+  user User
+}
+
+Table Wishlist {
+  userId String [pk]
+  user User [not null]
+  items WishlistItem [not null]
+}
+
+Table WishlistItem {
+  id String [pk]
+  wishlistId String [not null]
+  bookId Int [not null]
+  createdAt DateTime [default: `now()`, not null]
+  wishlist Wishlist [not null]
+  book Book [not null]
+
+  indexes {
+    (wishlistId, bookId) [unique]
+  }
+}
+
+Enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+Enum PaymentMethod {
+  COD
+  BANK_TRANSFER
+  PAYPAL
+}
+
+Enum OrderStatus {
+  PENDING
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+Enum CouponType {
+  PERCENT
+  FIXED_AMOUNT
+}
+
+Enum CartStatus {
+  ACTIVE
+  ABANDONED
+}
+
+Enum PaymentStatus {
+  PENDING
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+Ref: RefreshToken.userId > User.id [delete: Cascade]
+
+Ref: Address.userId > User.id [delete: Cascade]
+
+Ref: Book.authorId > Author.id [delete: Restrict]
+
+Ref: Book.publisherId > Publisher.id [delete: Set Null]
+
+Ref: Inventory.bookId - Book.id [delete: Cascade]
+
+Ref: BookImage.bookId > Book.id [delete: Cascade]
+
+Ref: BookCategory.bookId > Book.id [delete: Cascade]
+
+Ref: BookCategory.categoryId > Category.id [delete: Cascade]
+
+Ref: Cart.userId > User.id [delete: Cascade]
+
+Ref: CartItem.cartId > Cart.id [delete: Cascade]
+
+Ref: CartItem.bookId > Book.id [delete: Cascade]
+
+Ref: Order.userId > User.id [delete: Set Null]
+
+Ref: Order.shippingAddressId > Address.id [delete: Set Null]
+
+Ref: Payment.orderId > Order.id [delete: Cascade]
+
+Ref: OrderItem.orderId > Order.id [delete: Cascade]
+
+Ref: OrderItem.bookId > Book.id [delete: Set Null]
+
+Ref: CouponUsage.couponId > Coupon.id [delete: Cascade]
+
+Ref: CouponUsage.userId > User.id [delete: Set Null]
+
+Ref: CouponUsage.orderId > Order.id [delete: Cascade]
+
+Ref: Review.bookId > Book.id [delete: Cascade]
+
+Ref: Review.userId > User.id [delete: Set Null]
+
+Ref: Wishlist.userId - User.id [delete: Cascade]
+
+Ref: WishlistItem.wishlistId > Wishlist.userId [delete: Cascade]
+
+Ref: WishlistItem.bookId > Book.id [delete: Cascade]

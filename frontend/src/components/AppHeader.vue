@@ -163,7 +163,10 @@
                                   />
                                 </div>
                                 <div class="form-group pb-3">
-                                  <label class="mb-2" for="sign-in">Password *</label>
+                                  <label class="mb-2 d-flex justify-content-between w-100" for="sign-in">
+                                    <span>Password *</span>
+                                    <RouterLink to="/forgot-password" class="text-primary small text-decoration-none" @click="cleanupModal">Forgot password?</RouterLink>
+                                  </label>
                                   <input
                                     type="password"
                                     v-model="loginPassword"
@@ -503,15 +506,16 @@ async function handleRegister() {
   })
   
   if (success) {
-    // Reset step
-    regStep.value = 1
-    // Switch to login tab
-    const loginTab = document.getElementById('nav-sign-in-tab')
-    if (loginTab) {
-      const tab = window.bootstrap?.Tab?.getInstance(loginTab) || new window.bootstrap.Tab(loginTab)
-      tab.show()
-    }
-    toast.info('Registration successful! Please login.')
+    // Tự động đóng modal và dọn dẹp backdrop
+    cleanupModal()
+    
+    // Refresh cart
+    cart.fetchCart()
+
+    // Chuyển hướng nếu cần (ví dụ về trang chủ)
+    router.push('/')
+    
+    toast.success('Registration successful!')
   }
 }
 </script>

@@ -51,6 +51,23 @@
                     <label class="form-label">Last Name</label>
                     <input v-model="user.lastName" type="text" class="form-control" />
                   </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Phone Number</label>
+                    <input v-model="user.phone" type="text" class="form-control" placeholder="Enter your phone number" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Birthday</label>
+                    <input v-model="user.birthday" type="date" class="form-control" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Gender</label>
+                    <select v-model="user.gender" class="form-select">
+                      <option value="">Select gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
                   <div class="col-12">
                     <label class="form-label">Email</label>
                     <input v-model="user.email" type="email" class="form-control" disabled />
@@ -138,8 +155,17 @@ const fetchOrders = async () => {
 const updateProfile = async () => {
   updating.value = true
   try {
-    // API for updating profile not implemented yet in backend
-    // For now just mock it
+    const payload = {
+      firstName: user.value?.firstName?.trim() ?? '',
+      lastName: user.value?.lastName?.trim() ?? '',
+      phone: user.value?.phone?.trim() ?? '',
+      birthday: user.value?.birthday ?? null,
+      gender: user.value?.gender ?? '',
+    }
+
+    const updatedUser = await apiPatch('/auth/profile', { body: payload })
+    user.value = { ...updatedUser }
+    auth.setUser(updatedUser)
     toast.success('Profile updated successfully!')
   } catch (error) {
     toast.error('Failed to update profile')
@@ -166,9 +192,18 @@ const statusClass = (status) => {
   }
 }
 
-watch(() => auth.user, (val) => {
-  if (val) user.value = { ...val }
-}, { immediate: true })
+watch(
+  () => auth.user,
+  (val) => {
+    if (val) {
+      user.value = { ...val }
+      if (val.birthday) {
+        user.value.birthday = new Date(val.birthday).toISOString().split('T')[0]
+      }
+    }
+  },
+  { immediate: true },
+)
 
 onMounted(() => {
   if (!auth.isLoggedIn) {

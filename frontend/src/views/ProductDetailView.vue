@@ -223,7 +223,7 @@
                         <tr><td class="fw-bolder text-dark py-3 px-4 bg-light">Publisher</td><td class="py-3 px-4 fw-bold text-dark">{{ book.publisher || 'Classic Press' }}</td></tr>
                         <tr><td class="fw-bolder text-dark py-3 px-4 bg-light">Pages</td><td class="py-3 px-4 fw-bold text-dark">{{ book.pageCount || 'N/A' }} pages</td></tr>
                         <tr><td class="fw-bolder text-dark py-3 px-4 bg-light">Dimensions</td><td class="py-3 px-4 fw-bold text-dark">{{ book.dimensions || '5.5 x 1.2 x 8.2 inches' }}</td></tr>
-                        <tr><td class="fw-bolder text-dark py-3 px-4 bg-light">ISBN-10</td><td class="py-3 px-4 fw-bold text-dark">{{ book.sku }}</td></tr>
+                        <tr><td class="fw-bolder text-dark py-3 px-4 bg-light">ISBN-10</td><td class="py-3 px-4 fw-bold text-dark">{{ book.isbn10 || book.sku }}</td></tr>
                         <tr><td class="fw-bolder text-dark py-3 px-4 bg-light">Language</td><td class="py-3 px-4 fw-bold text-dark">{{ book.language || 'English' }}</td></tr>
                       </tbody>
                     </table>

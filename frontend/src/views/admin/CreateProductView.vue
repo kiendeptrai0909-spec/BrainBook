@@ -54,7 +54,7 @@
                   </div>
                 </div>
                 <div class="row">
-                  <div class="col-md-6 mb-3">
+                  <div class="col-md-4 mb-3">
                     <label for="productPrice" class="form-label"
                       >Giá <span class="text-danger">*</span></label
                     >
@@ -68,7 +68,18 @@
                       required
                     />
                   </div>
-                  <div class="col-md-6 mb-3">
+                  <div class="col-md-4 mb-3">
+                    <label for="compareAtPrice" class="form-label">Giá niêm yết (Gốc)</label>
+                    <input
+                      v-model.number="form.compareAtPrice"
+                      type="number"
+                      class="form-control"
+                      id="compareAtPrice"
+                      placeholder="0.00"
+                      step="0.01"
+                    />
+                  </div>
+                  <div class="col-md-4 mb-3">
                     <label for="productStock" class="form-label"
                       >Số lượng tồn kho <span class="text-danger">*</span></label
                     >
@@ -83,8 +94,79 @@
                   </div>
                 </div>
 
-                <div class="mb-3">
-                  <label for="productCategory" class="form-label">Danh mục (ID)</label>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="productAuthor" class="form-label"
+                      >Tác giả <span class="text-danger">*</span></label
+                    >
+                    <input
+                      v-model.trim="form.authorName"
+                      type="text"
+                      class="form-control"
+                      id="productAuthor"
+                      placeholder="Nhập tên tác giả"
+                      required
+                    />
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="productPublisher" class="form-label"
+                      >Nhà xuất bản</label
+                    >
+                    <input
+                      v-model.trim="form.publisherName"
+                      type="text"
+                      class="form-control"
+                      id="productPublisher"
+                      placeholder="Nhập tên nhà xuất bản"
+                    />
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-3 mb-3">
+                    <label for="format" class="form-label">Định dạng</label>
+                    <input
+                      v-model.trim="form.format"
+                      type="text"
+                      class="form-control"
+                      id="format"
+                      placeholder="VD: Bìa mềm"
+                    />
+                  </div>
+                  <div class="col-md-3 mb-3">
+                    <label for="language" class="form-label">Ngôn ngữ</label>
+                    <input
+                      v-model.trim="form.language"
+                      type="text"
+                      class="form-control"
+                      id="language"
+                      placeholder="VD: Tiếng Việt"
+                    />
+                  </div>
+                  <div class="col-md-2 mb-3">
+                    <label for="pageCount" class="form-label">Số trang</label>
+                    <input
+                      v-model.number="form.pageCount"
+                      type="number"
+                      class="form-control"
+                      id="pageCount"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div class="col-md-4 mb-3">
+                    <label for="isbn10" class="form-label">ISBN-10</label>
+                    <input
+                      v-model.trim="form.isbn10"
+                      type="text"
+                      class="form-control"
+                      id="isbn10"
+                      placeholder="Nhập mã ISBN"
+                    />
+                  </div>
+                </div>
+
+                <div class="mb-3 position-relative">
+                  <label for="productCategory" class="form-label">Danh mục</label>
                   <input
                     v-model.number="form.categoryId"
                     type="number"
@@ -115,13 +197,24 @@
                 </div>
 
                 <div class="mb-3">
-                  <label for="productDescription" class="form-label">Mô tả</label>
+                  <label for="productDescription" class="form-label">Mô tả ngắn</label>
                   <textarea
                     v-model="form.description"
                     class="form-control"
                     id="productDescription"
-                    rows="4"
-                    placeholder="Nhập mô tả sản phẩm"
+                    rows="3"
+                    placeholder="Nhập mô tả ngắn gọn"
+                  ></textarea>
+                </div>
+
+                <div class="mb-3">
+                  <label for="longDescription" class="form-label">Mô tả chi tiết</label>
+                  <textarea
+                    v-model="form.longDescription"
+                    class="form-control"
+                    id="longDescription"
+                    rows="6"
+                    placeholder="Nhập mô tả chi tiết sản phẩm"
                   ></textarea>
                 </div>
                 <div class="d-flex gap-2">
@@ -167,10 +260,17 @@ const form = reactive({
   title: '',
   sku: '',
   price: null,
+  compareAtPrice: null,
   stock: null,
   categoryId: null,
   description: '',
-  imageUrl: ''
+  longDescription: '',
+  format: '',
+  language: '',
+  pageCount: null,
+  isbn10: '',
+  dimensions: '',
+  imageUrl: '',
 })
 
 const fetchProduct = async () => {
@@ -181,8 +281,15 @@ const fetchProduct = async () => {
     form.title = book.title
     form.sku = book.sku
     form.price = book.price
+    form.compareAtPrice = book.compareAtPrice
     form.stock = book.stock
     form.description = book.description || ''
+    form.longDescription = book.longDescription || ''
+    form.format = book.format || ''
+    form.language = book.language || ''
+    form.pageCount = book.pageCount
+    form.isbn10 = book.isbn10 || ''
+    form.dimensions = book.dimensions || ''
     form.imageUrl = book.imageUrl || ''
     if (book.categories && book.categories.length > 0) {
       form.categoryId = book.categories[0].id
@@ -231,8 +338,15 @@ const handleSubmit = async () => {
       title: form.title,
       sku: form.sku,
       price: Number(form.price),
+      compareAtPrice: form.compareAtPrice ? Number(form.compareAtPrice) : null,
       stock: Number(form.stock),
       description: form.description,
+      longDescription: form.longDescription,
+      format: form.format,
+      language: form.language,
+      pageCount: form.pageCount ? Number(form.pageCount) : null,
+      isbn10: form.isbn10,
+      dimensions: form.dimensions,
       imageUrl: imageUrl,
     }
 

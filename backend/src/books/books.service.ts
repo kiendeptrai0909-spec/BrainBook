@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { QueryBooksDto } from './dto/query-books.dto';
 import { CreateBookDto } from './dto/create-book.dto';
+import { UpdateBookDto } from './dto/update-book.dto';
 
 const bookInclude = {
   author: true,
@@ -10,7 +11,6 @@ const bookInclude = {
   inventory: true,
   images: { orderBy: { sortOrder: 'asc' as const } },
   categories: { include: { category: true } },
-  tags: { include: { tag: true } },
 } satisfies Prisma.BookInclude;
 
 type BookRow = Prisma.BookGetPayload<{ include: typeof bookInclude }>;
@@ -152,7 +152,6 @@ export class BooksService {
       reviewCount: book.reviewCount,
       images: book.images.map((i) => ({ id: i.id, url: i.url, sortOrder: i.sortOrder })),
       categories: book.categories.map((c) => ({ id: c.category.id, name: c.category.name, slug: c.category.slug })),
-      tags: book.tags.map((t) => ({ id: t.tag.id, name: t.tag.name, slug: t.tag.slug })),
     };
   }
 
@@ -167,8 +166,14 @@ export class BooksService {
       sku: dto.sku,
       slug: slug,
       price: dto.price,
+      compareAtPrice: dto.compareAtPrice,
       description: dto.description || '',
-      format: 'Paperback',
+      longDescription: dto.longDescription,
+      format: dto.format || 'Paperback',
+      language: dto.language,
+      pageCount: dto.pageCount,
+      isbn10: dto.isbn10,
+      dimensions: dto.dimensions,
       imageUrl: dto.imageUrl || '',
       author: { connect: { id: authorId } },
       inventory: { create: { stock: dto.stock } },
@@ -195,12 +200,19 @@ export class BooksService {
     return this.serialize(book);
   }
 
-  async update(id: number, dto: any) {
+  async update(id: number, dto: UpdateBookDto) {
     const data: Prisma.BookUpdateInput = {
       title: dto.title,
       sku: dto.sku,
       price: dto.price,
+      compareAtPrice: dto.compareAtPrice,
       description: dto.description,
+      longDescription: dto.longDescription,
+      format: dto.format,
+      language: dto.language,
+      pageCount: dto.pageCount,
+      isbn10: dto.isbn10,
+      dimensions: dto.dimensions,
       imageUrl: dto.imageUrl,
     };
 

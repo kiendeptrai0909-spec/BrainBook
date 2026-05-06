@@ -53,6 +53,7 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useCartStore } from '@/stores/cart'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -70,7 +71,9 @@ const handleRegister = async () => {
   const success = await auth.register(form)
   loading.value = false
   if (success) {
-    router.push('/login')
+    const cart = useCartStore()
+    cart.fetchCart()
+    router.push('/')
   }
 }
 </script>

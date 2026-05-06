@@ -34,4 +34,23 @@ export class AuthController {
   profile(@CurrentUser() user: JwtUser) {
     return this.auth.profile(user.sub);
   }
+<<<<<<< HEAD
+=======
+
+  @Patch('profile')
+  @UseGuards(JwtAuthGuard)
+  updateProfile(@CurrentUser() user: JwtUser, @Body() dto: UpdateProfileDto) {
+    return this.auth.updateProfile(user.sub, dto);
+  }
+
+  @Post('forgot-password')
+  forgotPassword(@Body('email') email: string) {
+    return this.auth.forgotPassword(email);
+  }
+
+  @Post('reset-password')
+  resetPassword(@Body() dto: any) {
+    return this.auth.resetPassword(dto);
+  }
+>>>>>>> 30b9b13 (feat: implement password recovery, optimize database schema, and fix registration flow errors)
 }

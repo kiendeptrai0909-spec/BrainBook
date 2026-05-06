@@ -16,7 +16,7 @@
               <div class="mb-3">
                 <label class="form-label d-flex justify-content-between">
                   Password
-                  <a href="#" class="small text-decoration-none">Forgot password?</a>
+                  <RouterLink to="/forgot-password" class="small text-decoration-none">Forgot password?</RouterLink>
                 </label>
                 <input v-model="password" type="password" class="form-control" placeholder="Enter password" required />
               </div>

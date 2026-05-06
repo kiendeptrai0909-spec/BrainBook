@@ -16,6 +16,7 @@ import { UsersModule } from './users/users.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { WishlistModule } from './wishlist/wishlist.module';
 import { CouponsModule } from './coupons/coupons.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { CouponsModule } from './coupons/coupons.module';
     ReviewsModule,
     WishlistModule,
     CouponsModule,
+    MailModule,
   ],
   controllers: [HealthController],
 })
