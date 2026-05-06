@@ -384,4 +384,46 @@ export class OrdersService {
     }
     throw new BadRequestException('Could not allocate order number');
   }
+
+  async getStats() {
+    const [totalOrders, totalRevenue, statusCounts] = await Promise.all([
+      this.prisma.order.count(),
+      this.prisma.order.aggregate({
+        where: { payments: { some: { status: 'CAPTURED' } } },
+        _sum: { total: true },
+      }),
+      this.prisma.order.groupBy({
+        by: ['status'],
+        _count: { id: true },
+      }),
+    ]);
+
+    // Revenue for the last 7 days
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const recentRevenue = await this.prisma.order.findMany({
+      where: {
+        payments: { some: { status: 'CAPTURED' } },
+        createdAt: { gte: sevenDaysAgo },
+      },
+      select: {
+        total: true,
+        createdAt: true,
+      },
+    });
+
+    return {
+      totalOrders,
+      totalRevenue: Number(totalRevenue._sum?.total || 0),
+      statusCounts: statusCounts.reduce((acc, curr) => {
+        acc[curr.status] = curr._count.id;
+        return acc;
+      }, {} as Record<string, number>),
+      recentRevenue: recentRevenue.map(r => ({
+        total: Number(r.total),
+        createdAt: r.createdAt
+      })),
+    };
+  }
 }

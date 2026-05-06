@@ -120,14 +120,20 @@
               <div class="row g-3">
                 <div class="col-md-4">
                   <label class="form-label small fw-bolder text-dark uppercase tracking-tighter mb-2">QUANTITY</label>
-                  <div class="quantity-picker d-flex align-items-center bg-white rounded-pill p-1 border shadow-sm">
+                  <div class="quantity-picker d-flex align-items-center bg-white rounded-pill p-1 border shadow-sm" :class="{'border-danger': quantity >= book.stock}">
                     <button class="btn btn-icon rounded-circle" @click="quantity > 1 ? quantity-- : null">
                       <i class="ti ti-minus"></i>
                     </button>
                     <input type="number" class="form-control border-0 bg-transparent text-center fw-bold px-0 text-dark" v-model="quantity" style="width: 50px" readonly />
-                    <button class="btn btn-icon rounded-circle" @click="quantity++">
+                    <button class="btn btn-icon rounded-circle" @click="quantity < (book.stock || 0) ? quantity++ : null" :disabled="quantity >= book.stock">
                       <i class="ti ti-plus"></i>
                     </button>
+                  </div>
+                  <div v-if="book.stock <= 5 && book.stock > 0" class="small text-danger mt-1 fw-bold">
+                    Only {{ book.stock }} left in stock!
+                  </div>
+                  <div v-else-if="book.stock <= 0" class="small text-danger mt-1 fw-bold">
+                    Out of stock
                   </div>
                 </div>
                 <div class="col-md-8 d-flex align-items-end gap-2">
@@ -137,13 +143,13 @@
                     :disabled="book.stock <= 0"
                     class="btn btn-dark btn-lg px-4 py-3 rounded-pill flex-grow-1 shadow-premium d-flex align-items-center justify-content-center gap-2 transition-all-3"
                   >
-                    <i class="ti ti-shopping-cart fs-4"></i> ADD TO CART
+                    <i class="ti ti-shopping-cart fs-4"></i> {{ book.stock <= 0 ? 'OUT OF STOCK' : 'ADD TO CART' }}
                   </button>
                   <button @click="toggleWishlist" class="btn btn-icon btn-outline-danger rounded-circle shadow-sm bg-white" style="width: 58px; height: 58px; flex-shrink:0;">
                     <i class="ti fs-3" :class="isInWishlist ? 'ti-heart-filled' : 'ti-heart'"></i>
                   </button>
                 </div>
-                <div class="col-12 mt-3">
+                <div class="col-12 mt-3" v-if="book.stock > 0">
                   <button @click="buyNow" class="btn btn-buy-now w-100 py-3 rounded-pill fw-bold shadow-sm transition-all-3">
                     <i class="ti ti-bolt me-2"></i> BUY IT NOW
                   </button>
@@ -261,7 +267,44 @@
                 <div class="col-lg-8">
                   <div class="d-flex justify-content-between align-items-center mb-4">
                     <h4 class="fw-bold mb-0 text-dark">What Readers are Saying</h4>
-                    <button class="btn btn-primary rounded-pill px-4 fw-bold" v-if="auth.isLoggedIn" @click="activeTab = 'reviews'">Write a Review</button>
+                    <button class="btn btn-primary rounded-pill px-4 fw-bold" v-if="auth.isLoggedIn && !showReviewForm" @click="showReviewForm = true">Write a Review</button>
+                  </div>
+                  
+                  <!-- Review Form -->
+                  <div v-if="showReviewForm" class="card border-0 shadow-sm rounded-4 p-4 mb-4 animate-fade-in bg-light">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                      <h5 class="fw-bold mb-0 text-dark">Write your review</h5>
+                      <button class="btn-close" @click="showReviewForm = false"></button>
+                    </div>
+                    <form @submit.prevent="handleSubmitReview">
+                      <div class="mb-3">
+                        <label class="form-label fw-bold text-dark">Your Rating</label>
+                        <div class="rating-input text-warning fs-3 d-flex gap-2">
+                          <i 
+                            v-for="i in 5" :key="i" 
+                            class="ti cursor-pointer" 
+                            :class="i <= newReview.rating ? 'ti-star-filled' : 'ti-star'"
+                            @click="newReview.rating = i"
+                          ></i>
+                        </div>
+                      </div>
+                      <div class="mb-3">
+                        <label class="form-label fw-bold text-dark">Your Comment</label>
+                        <textarea 
+                          v-model="newReview.comment" 
+                          class="form-control rounded-3" 
+                          rows="4" 
+                          placeholder="Share your thoughts about this book..."
+                          required
+                        ></textarea>
+                      </div>
+                      <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary rounded-pill px-4" :disabled="submittingReview">
+                          {{ submittingReview ? 'Submitting...' : 'Post Review' }}
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" @click="showReviewForm = false">Cancel</button>
+                      </div>
+                    </form>
                   </div>
                   
                   <div v-if="reviews.length === 0" class="text-center py-5 bg-light rounded-4 border">
@@ -368,6 +411,7 @@ const relatedBooks = ref([])
 const loading = ref(false)
 const error = ref('')
 const submittingReview = ref(false)
+const showReviewForm = ref(false)
 const isInWishlist = ref(false)
 const showMockup = ref(false)
 
@@ -423,6 +467,7 @@ const handleSubmitReview = async () => {
     toast.success('Thank you for your review!')
     newReview.comment = ''
     newReview.rating = 5
+    showReviewForm.value = false
     await fetchReviews(book.value.id)
     const updatedBook = await apiGet(`/books/slug/${route.params.slug}`)
     book.value = updatedBook

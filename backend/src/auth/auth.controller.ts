@@ -1,9 +1,10 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
 import { CurrentUser, JwtUser } from '../common/current-user.decorator';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -34,8 +35,6 @@ export class AuthController {
   profile(@CurrentUser() user: JwtUser) {
     return this.auth.profile(user.sub);
   }
-<<<<<<< HEAD
-=======
 
   @Patch('profile')
   @UseGuards(JwtAuthGuard)
@@ -52,5 +51,4 @@ export class AuthController {
   resetPassword(@Body() dto: any) {
     return this.auth.resetPassword(dto);
   }
->>>>>>> 30b9b13 (feat: implement password recovery, optimize database schema, and fix registration flow errors)
 }

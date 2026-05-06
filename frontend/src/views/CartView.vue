@@ -63,6 +63,7 @@
                       class="btn rounded-0 p-0 d-flex justify-content-center align-items-center btn-qty"
                       @click="increase(item)"
                       type="button"
+                      :disabled="item.quantity >= item.maxQuantity"
                     >
                       +
                     </button>
@@ -117,12 +118,20 @@
           <p class="text-primary mb-3">Enter your coupon code if you have one.</p>
           <div class="input-group mb-3" style="max-width: 400px">
             <input
+              v-model="couponCode"
               type="text"
               class="form-control p-3 border-secondary-subtle"
               placeholder="Coupon Code"
               aria-label="Coupon Code"
+              :disabled="appliedCoupon"
             />
-            <button class="btn btn-apply px-4 fw-bold" type="button">Apply Coupon</button>
+            <button v-if="!appliedCoupon" @click="applyCoupon" class="btn btn-apply px-4 fw-bold" type="button" :disabled="validatingCoupon">
+              {{ validatingCoupon ? '...' : 'Apply Coupon' }}
+            </button>
+            <button v-else @click="removeCoupon" class="btn btn-danger px-4 fw-bold" type="button">Remove</button>
+          </div>
+          <div v-if="appliedCoupon" class="text-success fw-bold small">
+            Coupon "{{ appliedCoupon.code }}" applied successfully!
           </div>
         </div>
 
@@ -139,6 +148,11 @@
                 <span class="fw-medium text-dark">${{ cartSubtotal.toFixed(2) }}</span>
               </div>
 
+              <div v-if="discountAmount > 0" class="d-flex justify-content-between mb-3 text-success fw-bold">
+                <span>Discount</span>
+                <span>-${{ discountAmount.toFixed(2) }}</span>
+              </div>
+
               <div class="d-flex justify-content-between mb-4 pb-4 border-bottom">
                 <span class="text-primary">Shipping</span>
                 <span class="text-end">
@@ -150,7 +164,7 @@
               <div class="d-flex justify-content-between mb-5 align-items-center">
                 <span class="fs-5 fw-bold text-dark">Total</span>
                 <span class="fs-3 fw-bold" style="color: #f07c82"
-                  >${{ (cartSubtotal + 5).toFixed(2) }}</span
+                  >${{ cartTotal.toFixed(2) }}</span
                 >
               </div>
 
@@ -175,8 +189,8 @@ const loading = ref(false)
 const error = ref('')
 const subtotal = ref(0)
 
-const loadCart = async () => {
-  loading.value = true
+const loadCart = async (isBackground = false) => {
+  if (!isBackground) loading.value = true
   error.value = ''
   try {
     const data = await apiGet('/cart', { includeSession: true })
@@ -185,16 +199,26 @@ const loadCart = async () => {
   } catch (e) {
     error.value = e instanceof Error ? e.message : 'Failed to load cart'
   } finally {
-    loading.value = false
+    if (!isBackground) loading.value = false
   }
 }
 
 const patchQty = async (bookId, quantity) => {
+  // Optimistic update (optional but better)
+  const item = cartItems.value.find(i => i.id === bookId)
+  if (item) item.quantity = quantity
+  
   await apiPatch(`/cart/items/${bookId}`, { body: { quantity }, includeSession: true })
-  await loadCart()
+  await loadCart(true) // Silent refresh
 }
 
-const increase = async (item) => patchQty(item.id, item.quantity + 1)
+const increase = async (item) => {
+  if (item.quantity < item.maxQuantity) {
+    await patchQty(item.id, item.quantity + 1)
+  } else {
+    toast.warning(`Only ${item.maxQuantity} items available in stock`)
+  }
+}
 const decrease = async (item) => {
   if (item.quantity > 1) await patchQty(item.id, item.quantity - 1)
 }
@@ -205,6 +229,42 @@ const removeItem = async (bookId) => {
 }
 
 const cartSubtotal = computed(() => subtotal.value)
+
+const couponCode = ref('')
+const validatingCoupon = ref(false)
+const appliedCoupon = ref(null)
+
+const discountAmount = computed(() => {
+  if (!appliedCoupon.value) return 0
+  const sub = cartSubtotal.value
+  if (appliedCoupon.value.type === 'PERCENT') {
+    return (sub * Number(appliedCoupon.value.value)) / 100
+  }
+  return Math.min(sub, Number(appliedCoupon.value.value))
+})
+
+const cartTotal = computed(() => {
+  return Math.max(0, cartSubtotal.value - discountAmount.value + 5)
+})
+
+const applyCoupon = async () => {
+  if (!couponCode.value) return
+  validatingCoupon.value = true
+  try {
+    const res = await apiGet(`/coupons/validate?code=${couponCode.value}&subtotal=${cartSubtotal.value}`)
+    appliedCoupon.value = res
+    toast.success('Coupon applied!')
+  } catch (e) {
+    toast.error(e.message || 'Invalid coupon')
+  } finally {
+    validatingCoupon.value = false
+  }
+}
+
+const removeCoupon = () => {
+  appliedCoupon.value = null
+  couponCode.value = ''
+}
 
 onMounted(loadCart)
 </script>

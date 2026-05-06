@@ -76,64 +76,64 @@
       </div>
       <div class="row g-3 mb-3">
         <div class="col-lg-4 col-12">
-          <div class="card">
+          <div class="card shadow-sm border-0">
             <div class="card-body p-4">
-              <div class="d-flex justify-content-between border-bottom pb-5 mb-3">
+              <div class="d-flex justify-content-between border-bottom pb-4 mb-3">
                 <div>
-                  <h3 class="fw-bold h4">$25,458</h3>
-                  <span>Tổng lợi nhuận</span>
+                  <h3 class="fw-bold h4 text-success">${{ stats.totalRevenue }}</h3>
+                  <span class="text-muted small">Tổng doanh thu (Đã thanh toán)</span>
                 </div>
-                <div>
-                  <i class="ti ti-layers-subtract fs-1 text-primary"></i>
+                <div class="icon-shape bg-success bg-opacity-10 text-success rounded-3 p-3">
+                  <i class="ti ti-currency-dollar fs-2"></i>
                 </div>
               </div>
               <div class="d-flex justify-content-between align-items-center small">
                 <div class="text-muted">
-                  <span class="text-success">+35%</span> so với tháng trước
+                  Thực tế từ các đơn hàng PAID
                 </div>
-                <div><a href="#" class="link-primary text-decoration-underline">Xem</a></div>
+                <div><RouterLink to="/admin/orders" class="link-primary text-decoration-none fw-bold">Chi tiết</RouterLink></div>
               </div>
             </div>
           </div>
         </div>
         <div class="col-lg-4 col-12">
-          <div class="card">
+          <div class="card shadow-sm border-0">
             <div class="card-body p-4">
-              <div class="d-flex justify-content-between border-bottom pb-5 mb-3">
+              <div class="d-flex justify-content-between border-bottom pb-4 mb-3">
                 <div>
-                  <h3 class="fw-bold h4">$45,458</h3>
-                  <span>Tổng tiền hoàn trả</span>
+                  <h3 class="fw-bold h4 text-primary">{{ stats.totalOrders }}</h3>
+                  <span class="text-muted small">Tổng số đơn hàng</span>
                 </div>
-                <div>
-                  <i class="ti ti-credit-card fs-1 text-danger"></i>
+                <div class="icon-shape bg-primary bg-opacity-10 text-primary rounded-3 p-3">
+                  <i class="ti ti-shopping-cart fs-2"></i>
                 </div>
               </div>
               <div class="d-flex justify-content-between align-items-center small">
                 <div class="text-muted">
-                  <span class="text-danger">-20%</span> so với tháng trước
+                  Tất cả trạng thái
                 </div>
-                <div><a href="#" class="link-primary text-decoration-underline">Xem</a></div>
+                <div><RouterLink to="/admin/orders" class="link-primary text-decoration-none fw-bold">Quản lý</RouterLink></div>
               </div>
             </div>
           </div>
         </div>
         <div class="col-lg-4 col-12">
-          <div class="card">
+          <div class="card shadow-sm border-0">
             <div class="card-body p-4">
-              <div class="d-flex justify-content-between border-bottom pb-5 mb-3">
+              <div class="d-flex justify-content-between border-bottom pb-4 mb-3">
                 <div>
-                  <h3 class="fw-bold h4">$34,458</h3>
-                  <span>Tổng chi phí</span>
+                  <h3 class="fw-bold h4 text-warning">{{ stats.statusCounts['PENDING'] || 0 }}</h3>
+                  <span class="text-muted small">Đơn hàng đang chờ</span>
                 </div>
-                <div>
-                  <i class="ti ti-cash-banknote fs-1 text-warning"></i>
+                <div class="icon-shape bg-warning bg-opacity-10 text-warning rounded-3 p-3">
+                  <i class="ti ti-clock fs-2"></i>
                 </div>
               </div>
               <div class="d-flex justify-content-between align-items-center small">
                 <div class="text-muted">
-                  <span class="text-warning">-20%</span> so với tháng trước
+                  Cần xử lý ngay
                 </div>
-                <div><a href="#" class="link-primary text-decoration-underline">Xem</a></div>
+                <div><RouterLink to="/admin/orders" class="link-primary text-decoration-none fw-bold">Xử lý</RouterLink></div>
               </div>
             </div>
           </div>
@@ -411,6 +411,12 @@ const categories = ref([])
 
 const booksTotal = ref(0)
 const categoriesTotal = ref(0)
+const stats = ref({
+  totalOrders: 0,
+  totalRevenue: 0,
+  statusCounts: {},
+  recentRevenue: []
+})
 
 const lowStockThreshold = 10
 
@@ -490,101 +496,73 @@ const recentBooks = computed(() => books.value.slice(0, 5))
 let salesPurchaseChartInstance = null
 let customerChartInstance = null
 
+// Helper to group revenue by date
+const revenueByDate = computed(() => {
+  const dates = {}
+  const now = new Date()
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date()
+    d.setDate(now.getDate() - i)
+    dates[d.toISOString().split('T')[0]] = 0
+  }
+
+  stats.value.recentRevenue.forEach(item => {
+    const date = new Date(item.createdAt).toISOString().split('T')[0]
+    if (dates[date] !== undefined) {
+      dates[date] += Number(item.total)
+    }
+  })
+
+  return dates
+})
+
 const renderSalesPurchaseChart = () => {
   if (!salesPurchaseChartEl.value) return
 
   salesPurchaseChartInstance?.destroy()
 
+  const dates = Object.keys(revenueByDate.value)
+  const values = Object.values(revenueByDate.value)
+
   const options = {
     series: [
       {
-        name: 'Doanh thu',
-        data: [44, 55, 57, 56, 61, 58, 63, 60, 66],
-      },
-      {
-        name: 'Mua hàng',
-        data: [76, 85, 101, 98, 87, 105, 91, 114, 94],
-      },
+        name: 'Revenue ($)',
+        data: values,
+      }
     ],
-    colors: ['#f7a085', '#E66239'],
+    colors: ['#E66239'],
     chart: {
-      type: 'bar',
+      type: 'area',
       height: 350,
       width: '100%',
-      parentHeightOffset: 0,
       toolbar: { show: false },
     },
-    grid: {
-      show: true,
-      borderColor: '#e2e8f0',
-    },
-    legend: {
-      show: true,
-      fontFamily: 'Poppins, serif',
-      fontWeight: 500,
-      markers: {
-        size: 5,
-        shape: 'square',
-        strokeWidth: 0,
-        offsetX: -2,
-        offsetY: 0,
-      },
-    },
-    plotOptions: {
-      bar: {
-        horizontal: false,
-        columnWidth: '85%',
-        borderRadius: 3,
-        borderRadiusApplication: 'end',
-      },
-    },
     dataLabels: { enabled: false },
-    stroke: {
-      show: false,
-      width: 2,
-      colors: ['transparent'],
+    stroke: { curve: 'smooth', width: 3 },
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.7,
+        opacityTo: 0.2,
+        stops: [0, 90, 100]
+      }
     },
     xaxis: {
-      categories: [
-        '28 Jan',
-        '29 Jan',
-        '30 Jan',
-        '31 Jan',
-        '1 Feb',
-        '2 Feb',
-        '3 Feb',
-        '4 Feb',
-        '5 Feb',
-      ],
-      axisBorder: {
-        show: false,
-        color: '#e2e8f0',
-        height: 1,
-        width: '100%',
-        offsetX: 0,
-        offsetY: 0,
-      },
-      axisTicks: {
-        show: false,
-        borderType: 'solid',
-        color: '#e2e8f0',
-        height: 6,
-        offsetX: 0,
-        offsetY: 0,
-      },
+      categories: dates.map(d => {
+        const date = new Date(d)
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      }),
     },
     yaxis: {
       labels: {
-        formatter: (value) => `${value}k`,
-      },
-      title: {
-        text: '$ (nghìn)',
+        formatter: (value) => `$${value}`,
       },
     },
-    fill: { opacity: 1 },
     tooltip: {
       y: {
-        formatter: (val) => `$ ${val} nghìn`,
+        formatter: (val) => `$${val}`,
       },
     },
   }
@@ -598,48 +576,38 @@ const renderCustomerChart = () => {
 
   customerChartInstance?.destroy()
 
+  const counts = stats.value.statusCounts
+  const series = [
+    counts['PENDING'] || 0,
+    counts['COMPLETED'] || 0,
+    counts['CANCELLED'] || 0
+  ]
+
   const options = {
-    series: [44, 55],
+    series: series,
     chart: {
-      height: 200,
-      type: 'radialBar',
+      height: 250,
+      type: 'donut',
     },
-    colors: ['#5BE49B', '#E66239'],
+    labels: ['Pending', 'Completed', 'Cancelled'],
+    colors: ['#ffc107', '#198754', '#dc3545'],
+    legend: { position: 'bottom' },
+    dataLabels: { enabled: false },
     plotOptions: {
-      radialBar: {
-        dataLabels: {
-          name: { fontSize: '22px' },
-          value: { fontSize: '16px' },
-          total: { show: false },
-        },
-        hollow: {
-          margin: 3,
-          size: '40%',
-          background: 'transparent',
-          position: 'front',
-          dropShadow: { enabled: false, top: 0, left: 0, blur: 3, opacity: 0.5 },
-        },
-        track: {
-          show: true,
-          background: '#f0f0f0',
-          strokeWidth: '45%',
-          opacity: 1,
-          margin: 5,
-          dropShadow: { enabled: false, top: 0, left: 0, blur: 3, opacity: 0.5 },
-        },
-      },
-    },
-    fill: {
-      type: 'gradient',
-      gradient: {
-        shade: 'dark',
-        type: 'vertical',
-        gradientToColors: ['#007867', '#FFD666', '#FFAC82'],
-        stops: [0, 100],
-      },
-    },
-    stroke: { lineCap: 'round' },
-    labels: ['Lần đầu', 'Quay lại'],
+      pie: {
+        donut: {
+          size: '65%',
+          labels: {
+            show: true,
+            total: {
+              show: true,
+              label: 'Total Orders',
+              formatter: () => stats.value.totalOrders
+            }
+          }
+        }
+      }
+    }
   }
 
   customerChartInstance = new ApexCharts(customerChartEl.value, options)
@@ -650,23 +618,23 @@ async function loadDashboardData() {
   loading.value = true
   error.value = ''
   try {
-    const [booksResponse, categoriesResponse] = await Promise.all([
+    const [booksResponse, categoriesResponse, statsResponse] = await Promise.all([
       getBooks({ page: 1, limit: 50 }),
       getCategories(),
+      apiClient.get('/orders/stats')
     ])
 
     const bookList = extractList(booksResponse)
     books.value = bookList
-
     booksTotal.value = extractTotal(booksResponse, bookList.length)
 
     const categoryList = extractList(categoriesResponse)
     categories.value = categoryList
-
     categoriesTotal.value = extractTotal(categoriesResponse, categoryList.length)
+    
+    stats.value = statsResponse.data
   } catch (exception) {
-    error.value =
-      exception instanceof Error ? exception.message : 'Không tải được dữ liệu dashboard'
+    error.value = exception instanceof Error ? exception.message : 'Không tải được dữ liệu dashboard'
   } finally {
     loading.value = false
   }

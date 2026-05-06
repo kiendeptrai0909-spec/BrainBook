@@ -343,13 +343,14 @@
 
   <div class="search-popup">
     <div class="search-popup-container">
-      <form role="search" method="get" class="search-form" action="">
+      <form role="search" method="get" class="search-form position-relative" @submit.prevent="handleSearchSubmit">
         <input
+          v-model="searchQuery"
+          @input="handleSearchInput"
           type="search"
           id="search-form"
           class="search-field"
           placeholder="Type and press enter"
-          value=""
           name="s"
         />
         <button type="submit" class="search-submit">
@@ -357,6 +358,34 @@
             <use xlink:href="#search"></use>
           </svg>
         </button>
+
+        <!-- Live Search Results -->
+        <div v-if="showSearchResults" class="search-results-dropdown position-absolute top-100 start-0 w-100 bg-white shadow-lg rounded-3 overflow-hidden mt-2 z-3 border" style="text-align: left; min-width: 300px;">
+          <div v-if="isSearching" class="p-3 text-center">
+            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+            <span class="ms-2">Searching...</span>
+          </div>
+          <div v-else-if="searchResults.length === 0" class="p-3 text-center text-muted">
+            No products found for "{{ searchQuery }}"
+          </div>
+          <div v-else class="list-group list-group-flush">
+            <div 
+              v-for="item in searchResults" 
+              :key="item.id" 
+              class="list-group-item list-group-item-action d-flex align-items-center gap-3 py-2 cursor-pointer border-0"
+              @click="goToProduct(item.slug)"
+            >
+              <img :src="item.imageUrl" width="40" height="55" class="rounded object-fit-cover shadow-sm" />
+              <div class="flex-grow-1 overflow-hidden">
+                <p class="mb-0 fw-bold text-dark text-truncate">{{ item.title }}</p>
+                <p class="mb-0 small text-primary fw-bold">${{ item.price }}</p>
+              </div>
+            </div>
+            <div class="list-group-item list-group-item-action text-center py-2 bg-light border-0" @click="handleSearchSubmit">
+              <span class="small fw-bold">View all results</span>
+            </div>
+          </div>
+        </div>
       </form>
 
       <h5 class="cat-list-title text-center mb-4 text-primary">Browse Categories</h5>
@@ -428,6 +457,59 @@ const registerBirthday = ref('')
 const registerGender = ref('')
 const registerNewsletter = ref(false)
 const registerTerms = ref(false)
+
+// Live Search logic
+const searchQuery = ref('')
+const searchResults = ref([])
+const showSearchResults = ref(false)
+const isSearching = ref(false)
+let searchTimeout = null
+
+const handleSearchInput = () => {
+  if (searchTimeout) clearTimeout(searchTimeout)
+  
+  if (searchQuery.value.length < 2) {
+    searchResults.value = []
+    showSearchResults.value = false
+    return
+  }
+
+  isSearching.value = true
+  searchTimeout = setTimeout(async () => {
+    try {
+      const res = await apiClient.get('/books', {
+        params: { q: searchQuery.value, limit: 5 }
+      })
+      // Extract data from standard response format
+      searchResults.value = res.data?.data || res.data || []
+      showSearchResults.value = true
+    } catch (e) {
+      console.error('Search failed', e)
+    } finally {
+      isSearching.value = false
+    }
+  }, 300)
+}
+
+const clearSearch = () => {
+  searchQuery.value = ''
+  searchResults.value = []
+  showSearchResults.value = false
+}
+
+const goToProduct = (slug) => {
+  clearSearch()
+  // Close search popup if it's open (usually handled by CSS/JS outside Vue in some templates)
+  document.querySelector('.search-popup')?.classList.remove('active')
+  router.push(`/product/${slug}`)
+}
+
+const handleSearchSubmit = () => {
+  if (searchQuery.value.trim()) {
+    router.push(`/shop?q=${searchQuery.value}`)
+    document.querySelector('.search-popup')?.classList.remove('active')
+  }
+}
 
 // Hàm dọn dẹp Modal Bootstrap để tránh lỗi màn hình tối
 const cleanupModal = () => {

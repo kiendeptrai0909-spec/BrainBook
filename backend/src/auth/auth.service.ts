@@ -7,13 +7,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { JwtPayload } from './jwt.strategy';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-<<<<<<< HEAD
-=======
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { MailService } from '../mail/mail.service';
 import { v4 as uuidv4 } from 'uuid';
 import { ConfigService } from '@nestjs/config';
->>>>>>> 30b9b13 (feat: implement password recovery, optimize database schema, and fix registration flow errors)
 
 @Injectable()
 export class AuthService {
@@ -147,8 +144,6 @@ export class AuthService {
     return user;
   }
 
-<<<<<<< HEAD
-=======
   async updateProfile(userId: string, dto: UpdateProfileDto) {
     const data: any = {};
     if (dto.firstName !== undefined) data.firstName = dto.firstName?.trim() || null;
@@ -179,8 +174,6 @@ export class AuthService {
 
     return user;
   }
-
->>>>>>> 30b9b13 (feat: implement password recovery, optimize database schema, and fix registration flow errors)
   private sign(sub: string, email: string, role: string) {
     const payload: JwtPayload = { sub, email, role };
     return this.jwt.sign(payload);

@@ -12,6 +12,12 @@ import { OrdersService } from './orders.service';
 export class OrdersController {
   constructor(private readonly orders: OrdersService) {}
 
+  @Get('stats')
+  @UseGuards(JwtAuthGuard)
+  getStats() {
+    return this.orders.getStats();
+  }
+
   @Post()
   @UseGuards(OptionalJwtGuard)
   create(@Body() dto: CreateOrderDto, @CurrentUser() user: JwtUser | undefined) {

@@ -117,19 +117,27 @@ export class CartService {
       include: {
         items: {
           orderBy: { updatedAt: 'desc' },
+          include: {
+            book: {
+              include: { inventory: true }
+            }
+          }
         },
       },
     });
     if (!cart) throw new NotFoundException('Cart not found');
-    const items = cart.items.map((i) => ({
-      id: i.bookId,
-      name: i.titleSnapshot,
-      author: i.authorSnapshot,
-      image: i.imageUrlSnapshot,
-      price: i.unitPriceSnapshot.toNumber(),
-      quantity: i.quantity,
-      maxQuantity: 999,
-    }));
+    const items = cart.items.map((i) => {
+      const available = Math.max(0, (i.book.inventory?.stock ?? 0) - (i.book.inventory?.reserved ?? 0));
+      return {
+        id: i.bookId,
+        name: i.titleSnapshot,
+        author: i.authorSnapshot,
+        image: i.imageUrlSnapshot,
+        price: i.unitPriceSnapshot.toNumber(),
+        quantity: i.quantity,
+        maxQuantity: available,
+      };
+    });
     const subtotal = cart.items.reduce((s, i) => s + i.lineTotalSnapshot.toNumber(), 0);
     return { cartId: cart.id, items, subtotal };
   }
